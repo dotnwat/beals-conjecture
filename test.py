@@ -1,37 +1,46 @@
 import ctypes
 import random
 import fractions
+import unittest
 
 libbeal = ctypes.CDLL("./libbeal.so")
 
-# test modpow with dense range
-for base in range(1, 200):
-    for expo in range(1, 200):
-        for mod in range(1, 200):
-            val = pow(base, expo, mod)
-            val2 = libbeal.c_modpow(base, expo, mod)
-            assert val == val2
+class TestModPow(unittest.TestCase):
+    def __check(self, b, e, m):
+        value1 = pow(b, e, m)
+        value2 = libbeal.c_modpow(b, e, m)
+        self.assertEqual(value1, value2,
+                "%d != %d: %d %d %d" % (value1, value2, b, e, m))
 
-# test modpow with random values
-for _ in range(1000):
-    base = random.randint(1, 2**64-1)
-    expo = random.randint(1, 2**64-1)
-    mod = random.randint(1, 2**32-1)
-    val = pow(base, expo, mod)
-    val2 = libbeal.c_modpow(base, expo, mod)
-    assert val == val
+    def test_dense(self):
+        for base in range(1, 200):
+            for expo in range(1, 200):
+                for mod in range(1, 200):
+                    self.__check(base, expo, mod)
 
-# test gcd with dense range
-for u in range(1, 100):
-    for v in range(1, 100):
-        val = fractions.gcd(u, v)
-        val2 = libbeal.c_gcd(u, v)
-        assert val == val2
+    def test_random(self):
+        for _ in range(10000):
+            base = random.randint(1, 2**64-1)
+            expo = random.randint(1, 2**64-1)
+            mod = random.randint(1, 2**32-1)
+            self.__check(base, expo, mod)
 
-# test gcd with random values
-for _ in range(1000):
-    u = random.randint(1, 2**32-1)
-    v = random.randint(1, 2**32-1)
-    val = fractions.gcd(u, v)
-    val2 = libbeal.c_gcd(u, v)
-    assert val == val2
+class TestGCD(unittest.TestCase):
+    def __check(self, u, v):
+        value1 = fractions.gcd(u, v)
+        value2 = libbeal.c_gcd(u, v)
+        self.assertEqual(value1, value2, "%u %u" % (u, v))
+
+    def test_dense(self):
+        for u in range(1, 100):
+            for v in range(1, 100):
+                self.__check(u, v)
+
+    def test_random(self):
+        for _ in range(1000):
+            u = random.randint(1, 2**32-1)
+            v = random.randint(1, 2**32-1)
+            self.__check(u, v)
+
+if __name__ == '__main__':
+    unittest.main()
