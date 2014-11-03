@@ -1,2 +1,2 @@
 libbeal.so: beal.cc
-	g++ -Wall -fPIC -shared -o $@ $?
+	g++ -Wall -O3 -fPIC -shared -o $@ $?
