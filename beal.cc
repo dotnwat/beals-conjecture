@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include <assert.h>
+#include <vector>
 
 /*
  * http://en.wikipedia.org/wiki/Modular_exponentiation
@@ -64,6 +65,39 @@ static inline unsigned int gcd(unsigned int u, unsigned int v)
   return u << shift;
 }
 
+class cz {
+ public:
+  cz(unsigned int maxb, unsigned int maxp, uint32_t mod) {
+    assert(maxb > 0);
+    assert(maxp > 2);
+    assert(mod > 0);
+    vals_.resize(maxb+1);
+    exists_.resize(1ULL<<32);
+    for (unsigned int c = 1; c <= maxb; c++) {
+      vals_[c].resize(maxp+1);
+      for (unsigned int z = 3; z <= maxp; z++) {
+        uint32_t val = modpow(c, z, mod);
+        vals_[c][z] = val;
+        exists_[val] = true;
+      }
+    }
+  }
+
+  inline uint32_t get(int c, int z) const {
+    assert(c > 0);
+    assert(z > 2);
+    return vals_[c][z];
+  }
+
+  inline bool exists(uint32_t val) const {
+    return exists_[val];
+  }
+
+ private:
+  std::vector<std::vector<uint32_t> > vals_;
+  std::vector<bool> exists_;
+};
+
 
 extern "C" {
 
@@ -76,5 +110,25 @@ extern "C" {
 
   unsigned int c_gcd(unsigned int u, unsigned int v) {
     return gcd(u, v);
+  }
+
+  void *cz_make(unsigned int maxb, unsigned int maxp, uint32_t mod) {
+    cz *p = new cz(maxb, maxp, mod);
+    return (void*)p;
+  }
+
+  void cz_free(void *czp) {
+    cz *p = (cz*)czp;
+    delete p;
+  }
+
+  uint32_t cz_get(void *czp, int c, int z) {
+    cz *p = (cz*)czp;
+    return p->get(c, z);
+  }
+
+  bool cz_exists(void *czp, uint32_t val) {
+    cz *p = (cz*)czp;
+    return p->exists(val);
   }
 }
