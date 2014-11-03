@@ -98,6 +98,57 @@ class cz {
   std::vector<bool> exists_;
 };
 
+/*
+ * for a in range(1, maxb+1):
+ *   for b in range(1, a+1):
+ *     if gcd(a, b) > 1:
+ *       continue
+ *     for x in range(3, maxp+1)
+ *       for y in range(3, maxp+1):
+ *         point = (a, x, b, y)
+ */
+class axby {
+ public:
+  struct point {
+    point(int a, int x, int b, int y) :
+      a(a), x(x), b(b), y(y)
+    {}
+
+    int a, x, b, y;
+  };
+
+  axby(int maxb, int maxp, int a, int x, int b, int y) :
+    maxb_(maxb), maxp_(maxp), p_(a, x, b, y)
+  {
+    p_.y--;
+  }
+
+  point& next() {
+    if (++p_.y > maxp_) {
+      p_.y = 3;
+      if (++p_.x > maxp_) {
+        p_.x = 3;
+        p_.b++;
+        for (;;) {
+          if (p_.b > p_.a) {
+            p_.b = 1;
+            if (++p_.a > maxb_)
+              assert(false);
+          } else if (gcd(p_.a, p_.b) > 1) {
+            p_.b++;
+          } else
+            break;
+        }
+      }
+    }
+    return p_;
+  }
+
+ private:
+  int maxb_;
+  int maxp_;
+  struct point p_;
+};
 
 extern "C" {
 
@@ -130,5 +181,24 @@ extern "C" {
   bool cz_exists(void *czp, uint32_t val) {
     cz *p = (cz*)czp;
     return p->exists(val);
+  }
+
+  void *axby_make(unsigned int maxb, unsigned int maxp, int a, int x, int b, int y) {
+    axby *p = new axby(maxb, maxp, a, x, b, y);
+    return (void*)p;
+  }
+
+  void axby_next(void *axbyp, axby::point *pp) {
+    axby *p = (axby*)axbyp;
+    axby::point& pt = p->next();
+    pp->a = pt.a;
+    pp->x = pt.x;
+    pp->b = pt.b;
+    pp->y = pt.y;
+  }
+
+  void axby_free(void *axbyp) {
+    axby *p = (axby*)axbyp;
+    delete p;
   }
 }

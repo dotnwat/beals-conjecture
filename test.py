@@ -21,6 +21,14 @@ libbeal.cz_get.restype = ctypes.c_uint
 libbeal.cz_exists.argtypes = [ctypes.c_void_p, ctypes.c_uint]
 libbeal.cz_exists.restype = ctypes.c_bool
 
+class Point(ctypes.Structure):
+    _fields_ = [
+        ("a", ctypes.c_int),
+        ("x", ctypes.c_int),
+        ("b", ctypes.c_int),
+        ("y", ctypes.c_int),
+    ]
+
 class TestModPow(unittest.TestCase):
     def __check(self, b, e, m):
         value1 = pow(b, e, m)
@@ -110,6 +118,25 @@ class TestCz(unittest.TestCase):
                 for mod in range(1, 10):
                     print maxb, maxp, mod
                     self.__check(maxb, maxp, mod)
+
+class TestAxby(unittest.TestCase):
+    def test_all_points(self):
+        maxb = 50
+        maxp = 50
+        axbyp = libbeal.axby_make(maxb, maxp, 1, 3, 1, 3)
+        for a in xrange(1, maxb+1):
+            for b in xrange(1, maxb+1):
+                if b > a or fractions.gcd(a, b) > 1:
+                    continue
+                for x in xrange(3, maxp+1):
+                    for y in xrange(3, maxp+1):
+                        p = Point()
+                        libbeal.axby_next(axbyp, ctypes.byref(p))
+                        self.assertEqual(a, p.a)
+                        self.assertEqual(x, p.x)
+                        self.assertEqual(b, p.b)
+                        self.assertEqual(y, p.y)
+        libbeal.axby_free(axbyp)
 
 if __name__ == '__main__':
     unittest.main()
