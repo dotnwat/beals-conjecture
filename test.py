@@ -30,6 +30,13 @@ class TestModPow(unittest.TestCase):
             mod = random.randint(1, 2**32-1)
             self.__check(base, expo, mod)
 
+    def test_specific(self):
+        # random testing found a problem with c_modpow for these inputs. the
+        # fix was to include `base = base % mod` before starting the loop in
+        # the modpow algo, as is done in the wikipedia algorithm.
+        self.__check(4542062976100348463, 4637193517411546665, 3773338459)
+        self.__check(70487458014159955, 5566498974156504764, 3541295600)
+
 class TestGCD(unittest.TestCase):
     def __check(self, u, v):
         value1 = fractions.gcd(u, v)
