@@ -5,6 +5,11 @@ import unittest
 
 libbeal = ctypes.CDLL("./libbeal.so")
 
+# uint64_t, uint64_t, uint32_t -> uint32_t
+libbeal.c_modpow.argtypes = [ctypes.c_ulonglong,
+        ctypes.c_ulonglong, ctypes.c_uint]
+libbeal.c_modpow.restype = ctypes.c_uint
+
 class TestModPow(unittest.TestCase):
     def __check(self, b, e, m):
         value1 = pow(b, e, m)
