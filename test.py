@@ -14,8 +14,8 @@ void cz_free(void *czp);
 uint32_t cz_get(void *czp, int c, int z);
 bool cz_exists(void *czp, uint32_t val);
 struct point { int a, x, b, y; };
-void *axby_make(unsigned int maxb, unsigned int maxp, int a, int x, int b, int y);
-void axby_next(void *axbyp, struct point *pp, int count);
+void *axby_make(unsigned int maxb, unsigned int maxp, int a);
+bool axby_next(void *axbyp, struct point *pp);
 void axby_free(void *axbyp);
 ''')
 
@@ -132,22 +132,26 @@ class TestCz(unittest.TestCase):
 
 class TestAxby(unittest.TestCase):
     def test_all_points(self):
-        maxb = 100
-        maxp = 100
-        axbyp = libbeal.axby_make(maxb, maxp, 1, 3, 1, 3)
+        maxb = 200
+        maxp = 200
         point = ffi.new('struct point [1]')
         for a in xrange(1, maxb+1):
-            for b in xrange(1, maxb+1):
-                if b > a or fractions.gcd(a, b) > 1:
+            p = libbeal.axby_make(maxb, maxp, a)
+            for b in xrange(1, a+1):
+                if fractions.gcd(a, b) > 1:
                     continue
                 for x in xrange(3, maxp+1):
                     for y in xrange(3, maxp+1):
-                        libbeal.axby_next(axbyp, point, 1)
+                        done = libbeal.axby_next(p, point)
+                        assert(not done)
                         self.assertEqual(a, point[0].a)
                         self.assertEqual(x, point[0].x)
                         self.assertEqual(b, point[0].b)
                         self.assertEqual(y, point[0].y)
-        libbeal.axby_free(axbyp)
+            done = libbeal.axby_next(p, point)
+            assert(done)
+            libbeal.axby_free(p)
+
 
 if __name__ == '__main__':
     unittest.main()

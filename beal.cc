@@ -110,22 +110,12 @@ class cz {
 /*
  * Iterator over (a, x, b, y) space.
  *
- * The starting point is provided and provides an iterator interface over all
- * of the points up to max_base and max_power while performing common space
- * trimming optimizations (b<=a, gcd). It is equivalent to the following
- * nested loops but starts at a given point in the (a, x, b, y) space.
+ * The starting point is a value for the "a" dimension. All points will be
+ * generated and the normal trimming optimizations (b <= a, gcd) will be
+ * applied.
  *
- * for a in range(1, maxb+1):
- *   for b in range(1, a+1):
- *     if gcd(a, b) > 1:
- *       continue
- *     for x in range(3, maxp+1)
- *       for y in range(3, maxp+1):
- *         point = (a, x, b, y)
- *
- * Note that the caller must divide the space itself. It is a fatal error to
- * call next() if would result in choosing a point outside the configured
- * bounds.
+ * After initializing the class call next() next until the output parameter is
+ * false. When false is returned the corresponding point should be discarded.
  */
 class axby {
  public:
@@ -137,19 +127,20 @@ class axby {
     int a, x, b, y;
   };
 
-  axby(int maxb, int maxp, int a, int x, int b, int y) :
-    maxb_(maxb), maxp_(maxp), p_(a, x, b, y)
+  axby(int maxb, int maxp, int a) :
+    maxb_(maxb), maxp_(maxp), p_(a, 3, 1, 3), a_dim_(a)
   {
     assert(maxb > 0);
     assert(maxp > 2);
-    assert(a > 0);
-    assert(b > 0);
-    assert(x > 2);
-    assert(y > 2);
+    assert(p_.a > 0);
+    assert(p_.x == 3);
+    assert(p_.b == 1);
+    assert(p_.y == 3);
     p_.y--; // first next() call will be starting point
   }
 
-  point& next() {
+  inline point& next(bool *done) {
+    assert(p_.a == a_dim_);
     if (++p_.y > maxp_) {
       p_.y = 3;
       if (++p_.x > maxp_) {
@@ -157,9 +148,24 @@ class axby {
         p_.b++;
         for (;;) {
           if (p_.b > p_.a) {
-            p_.b = 1;
-            if (++p_.a > maxb_)
-              assert(false);
+
+            // this is where b rolls over. when generating the entire space of
+            // points this is the point we would increment "a". For example:
+            //
+            //   p_.b = 1;
+            //   if (++p_.a > maxb_) {
+            //     *done = true;
+            //     return p_;
+            //   }
+            //
+            // Since we only want to iterate over the space for a given "a"
+            // value this is the point we return `done = true` to the caller.
+
+            // bump p_.a so we can assert on its uniqueness
+            p_.a++;
+            *done = true;
+            return p_;
+
           } else if (gcd(p_.a, p_.b) > 1) {
             p_.b++;
           } else
@@ -167,6 +173,8 @@ class axby {
         }
       }
     }
+
+    *done = false;
     return p_;
   }
 
@@ -174,6 +182,7 @@ class axby {
   int maxb_;
   int maxp_;
   struct point p_;
+  int a_dim_;
 };
 
 /*
@@ -209,20 +218,21 @@ extern "C" {
     return p->exists(val);
   }
 
-  void *axby_make(unsigned int maxb, unsigned int maxp, int a, int x, int b, int y) {
-    axby *p = new axby(maxb, maxp, a, x, b, y);
+  void *axby_make(unsigned int maxb, unsigned int maxp, int a) {
+    axby *p = new axby(maxb, maxp, a);
     return (void*)p;
   }
 
-  void axby_next(void *axbyp, axby::point *pp, int count) {
+  /* if done, the returned point is invalid. */
+  bool axby_next(void *axbyp, axby::point *pp) {
     axby *p = (axby*)axbyp;
-    for (int i = 0; i < count; i++) {
-      axby::point& pt = p->next();
-      pp[i].a = pt.a;
-      pp[i].x = pt.x;
-      pp[i].b = pt.b;
-      pp[i].y = pt.y;
-    }
+    bool done;
+    axby::point& pt = p->next(&done);
+    pp->a = pt.a;
+    pp->x = pt.x;
+    pp->b = pt.b;
+    pp->y = pt.y;
+    return done;
   }
 
   void axby_free(void *axbyp) {
