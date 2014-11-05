@@ -84,6 +84,7 @@ class cz {
         exists_[val] = true;
       }
     }
+    mod_ = mod;
   }
 
   inline uint32_t get(int c, int z) const {
@@ -96,9 +97,14 @@ class cz {
     return exists_[val];
   }
 
+  inline uint32_t mod() const {
+    return mod_;
+  }
+
  private:
   std::vector<std::vector<uint32_t> > vals_;
   std::vector<bool> exists_;
+  uint32_t mod_;
 };
 
 /*
