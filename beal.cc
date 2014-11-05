@@ -185,11 +185,69 @@ class axby {
   int a_dim_;
 };
 
+class work {
+ public:
+  work(int maxb, int maxp, uint32_t *primes, size_t nprimes) :
+    maxb_(maxb), maxp_(maxp) {
+      for (size_t i = 0; i < nprimes; i++) {
+        std::cout << primes[i] << std::endl;
+        czs_.push_back(new cz(maxb, maxp, primes[i]));
+      }
+  }
+
+  ~work() {
+    for (size_t i = 0; i < czs_.size(); i++)
+      delete czs_[i];
+  }
+
+  void dowork(int a) {
+    bool done;
+    axby pts(maxb_, maxp_, a);
+    axby::point& pt = pts.next(&done);
+    while (!done) {
+      std::vector<cz*>::const_iterator it = czs_.begin();
+      for (; it != czs_.end(); it++) {
+        cz *czp = *it;
+        uint64_t tmp = czp->get(pt.a, pt.x) + czp->get(pt.b, pt.y);
+        uint32_t val = tmp % czp->mod();
+        if (!czp->exists(val))
+          break;
+      }
+
+      // candidate?
+      if (it == czs_.end())
+        std::cout << pt.a << " " << pt.x << " " << pt.b << " " << pt.y << std::endl;
+
+      pt = pts.next(&done);
+    }
+  }
+
+ private:
+  int maxb_;
+  int maxp_;
+  std::vector<cz*> czs_;
+};
+
 /*
  * C-linkage interface for testing because it is super convenient to
  * coordinate all the tests from Python. Used via cffi or ctypes.
  */
 extern "C" {
+  void *work_make(unsigned int maxb, unsigned int maxp, uint32_t *primes, size_t nprimes) {
+    work *p = new work(maxb, maxp, primes, nprimes);
+    return (void*)p;
+  }
+
+  void work_work(void *workp, int a) {
+    work *p = (work*)workp;
+    p->dowork(a);
+  }
+
+  void work_free(void *workp) {
+    work *p = (work*)workp;
+    delete p;
+  }
+
   uint32_t c_modpow(uint64_t base, uint64_t exponent, uint32_t mod) {
     return modpow(base, exponent, mod);
   }
