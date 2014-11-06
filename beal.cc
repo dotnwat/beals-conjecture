@@ -200,23 +200,26 @@ class work {
       delete czs_[i];
   }
 
-  void dowork(int a) {
+  void do_work(int a, std::vector<axby::point>& results) {
     bool done;
     axby pts(maxb_, maxp_, a);
+
     axby::point& pt = pts.next(&done);
     while (!done) {
-      std::vector<cz*>::const_iterator it = czs_.begin();
-      for (; it != czs_.end(); it++) {
-        cz *czp = *it;
-        uint64_t tmp = czp->get(pt.a, pt.x) + czp->get(pt.b, pt.y);
-        uint32_t val = tmp % czp->mod();
-        if (!czp->exists(val))
+      bool found = true;
+      for (int i = 0; i < czs_.size(); i++) {
+        cz *czp = czs_[i];
+        uint64_t ax = czp->get(pt.a, pt.x);
+        uint64_t by = czp->get(pt.b, pt.y);
+        uint64_t val = (ax + by) % czp->mod();
+        if (!czp->exists(val)) {
+          found = false;
           break;
+        }
       }
 
-      // candidate?
-      if (it == czs_.end())
-        std::cout << pt.a << " " << pt.x << " " << pt.b << " " << pt.y << std::endl;
+      if (found)
+        results.push_back(pt);
 
       pt = pts.next(&done);
     }
@@ -238,9 +241,15 @@ extern "C" {
     return (void*)p;
   }
 
-  void work_work(void *workp, int a) {
+  size_t work_do_work(void *workp, int a, axby::point *pts, size_t len) {
     work *p = (work*)workp;
-    p->dowork(a);
+    std::vector<axby::point> results;
+    p->do_work(a, results);
+    if (results.size() <= len) {
+      for (size_t i = 0; i < results.size(); i++)
+        pts[i] = results[i];
+    }
+    return results.size();
   }
 
   void work_free(void *workp) {
