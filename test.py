@@ -1,35 +1,22 @@
-import ctypes
 import random
 import fractions
 import unittest
 import cffi
 
 ffi = cffi.FFI()
-libbeal2 = ffi.dlopen("./libbeal.so")
+libbeal = ffi.dlopen("./libbeal.so")
 ffi.cdef('''
+uint32_t c_modpow(uint64_t base, uint64_t exponent, uint32_t mod);
+unsigned int c_gcd(unsigned int u, unsigned int v);
+void *cz_make(unsigned int maxb, unsigned int maxp, uint32_t mod);
+void cz_free(void *czp);
+uint32_t cz_get(void *czp, int c, int z);
+bool cz_exists(void *czp, uint32_t val);
 struct point { int a, x, b, y; };
 void *axby_make(unsigned int maxb, unsigned int maxp, int a, int x, int b, int y);
 void axby_next(void *axbyp, struct point *pp, int count);
 void axby_free(void *axbyp);
 ''')
-
-libbeal = ctypes.CDLL("./libbeal.so")
-
-# uint64_t, uint64_t, uint32_t -> uint32_t
-libbeal.c_modpow.argtypes = [ctypes.c_ulonglong,
-        ctypes.c_ulonglong, ctypes.c_uint]
-libbeal.c_modpow.restype = ctypes.c_uint
-
-libbeal.cz_make.argtypes = [ctypes.c_uint, ctypes.c_uint, ctypes.c_uint]
-libbeal.cz_make.restype = ctypes.c_void_p
-
-libbeal.cz_free.argtypes = [ctypes.c_void_p]
-
-libbeal.cz_get.argtypes = [ctypes.c_void_p, ctypes.c_int, ctypes.c_int]
-libbeal.cz_get.restype = ctypes.c_uint
-
-libbeal.cz_exists.argtypes = [ctypes.c_void_p, ctypes.c_uint]
-libbeal.cz_exists.restype = ctypes.c_bool
 
 class TestModPow(unittest.TestCase):
     def __check(self, b, e, m):
@@ -124,7 +111,7 @@ class TestAxby(unittest.TestCase):
     def test_all_points(self):
         maxb = 100
         maxp = 100
-        axbyp = libbeal2.axby_make(maxb, maxp, 1, 3, 1, 3)
+        axbyp = libbeal.axby_make(maxb, maxp, 1, 3, 1, 3)
         point = ffi.new('struct point [1]')
         for a in xrange(1, maxb+1):
             for b in xrange(1, maxb+1):
@@ -132,12 +119,12 @@ class TestAxby(unittest.TestCase):
                     continue
                 for x in xrange(3, maxp+1):
                     for y in xrange(3, maxp+1):
-                        libbeal2.axby_next(axbyp, point, 1)
+                        libbeal.axby_next(axbyp, point, 1)
                         self.assertEqual(a, point[0].a)
                         self.assertEqual(x, point[0].x)
                         self.assertEqual(b, point[0].b)
                         self.assertEqual(y, point[0].y)
-        libbeal2.axby_free(axbyp)
+        libbeal.axby_free(axbyp)
 
 if __name__ == '__main__':
     unittest.main()
