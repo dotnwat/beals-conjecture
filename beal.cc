@@ -188,13 +188,15 @@ extern "C" {
     return (void*)p;
   }
 
-  void axby_next(void *axbyp, axby::point *pp) {
+  void axby_next(void *axbyp, axby::point *pp, int count) {
     axby *p = (axby*)axbyp;
-    axby::point& pt = p->next();
-    pp->a = pt.a;
-    pp->x = pt.x;
-    pp->b = pt.b;
-    pp->y = pt.y;
+    for (int i = 0; i < count; i++) {
+      axby::point& pt = p->next();
+      pp[i].a = pt.a;
+      pp[i].x = pt.x;
+      pp[i].b = pt.b;
+      pp[i].y = pt.y;
+    }
   }
 
   void axby_free(void *axbyp) {
