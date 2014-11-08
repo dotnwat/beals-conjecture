@@ -171,9 +171,8 @@ class axby {
 };
 
 /*
- * C-linkage testing interface.
- *
- * It's super convenient to coordinate testing from Python.
+ * C-linkage interface for testing because it is super convenient to
+ * coordinate all the tests from Python. Used via cffi or ctypes.
  */
 extern "C" {
   uint32_t c_modpow(uint64_t base, uint64_t exponent, uint32_t mod) {
