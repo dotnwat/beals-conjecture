@@ -65,6 +65,9 @@ static inline unsigned int gcd(unsigned int u, unsigned int v)
   return u << shift;
 }
 
+/*
+ * Utility over c^z space for a particular mod value.
+ */
 class cz {
  public:
   cz(unsigned int maxb, unsigned int maxp, uint32_t mod) {
@@ -99,6 +102,13 @@ class cz {
 };
 
 /*
+ * Iterator over (a, x, b, y) space.
+ *
+ * The starting point is provided and provides an iterator interface over all
+ * of the points up to max_base and max_power while performing common space
+ * trimming optimizations (b<=a, gcd). It is equivalent to the following
+ * nested loops but starts at a given point in the (a, x, b, y) space.
+ *
  * for a in range(1, maxb+1):
  *   for b in range(1, a+1):
  *     if gcd(a, b) > 1:
@@ -106,6 +116,10 @@ class cz {
  *     for x in range(3, maxp+1)
  *       for y in range(3, maxp+1):
  *         point = (a, x, b, y)
+ *
+ * Note that the caller must divide the space itself. It is a fatal error to
+ * call next() if would result in choosing a point outside the configured
+ * bounds.
  */
 class axby {
  public:
@@ -120,7 +134,13 @@ class axby {
   axby(int maxb, int maxp, int a, int x, int b, int y) :
     maxb_(maxb), maxp_(maxp), p_(a, x, b, y)
   {
-    p_.y--;
+    assert(maxb > 0);
+    assert(maxp > 2);
+    assert(a > 0);
+    assert(b > 0);
+    assert(x > 2);
+    assert(y > 2);
+    p_.y--; // first next() call will be starting point
   }
 
   point& next() {
@@ -150,11 +170,12 @@ class axby {
   struct point p_;
 };
 
+/*
+ * C-linkage testing interface.
+ *
+ * It's super convenient to coordinate testing from Python.
+ */
 extern "C" {
-
-  /*
-   * Access to routines for testing
-   */
   uint32_t c_modpow(uint64_t base, uint64_t exponent, uint32_t mod) {
     return modpow(base, exponent, mod);
   }
