@@ -13,6 +13,9 @@ struct point { int a, x, b, y; };
 void *axby_make(unsigned int maxb, unsigned int maxp, int a);
 bool axby_next(void *axbyp, struct point *pp);
 void axby_free(void *axbyp);
+void *work_make(unsigned int maxb, unsigned int maxp, uint32_t *primes, size_t nprimes);
+void work_free(void *workp);
+size_t work_do_work(void *workp, int a, struct point *pts, size_t npts);
 ''')
 
 def modpow(b, e, m):
@@ -58,4 +61,24 @@ class axby(object):
     def cleanup(self):
         if self._p:
             _libbeal.axby_free(self._p)
+            self._p = None
+
+class search(object):
+    def __init__(self, maxb, maxp, primes):
+        self._p = _libbeal.work_make(maxb, maxp, primes, len(primes))
+        self._points = _ffi.new('struct point [1000000]')
+
+    def __del__(self):
+        self.cleanup()
+
+    def search(self, a):
+        nresults = _libbeal.work_do_work(self._p, a, self._points, len(self._points))
+        assert(nresults <= len(self._points))
+        for i in range(0, nresults):
+            yield (self._points[i].a, self._points[i].x, self._points[i].b,
+                    self._points[i].y)
+
+    def cleanup(self):
+        if self._p:
+            _libbeal.work_free(self._p)
             self._p = None

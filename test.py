@@ -2,6 +2,7 @@ import random
 import fractions
 import unittest
 import os
+import re
 import beal
 
 # run fast tests?
@@ -136,6 +137,45 @@ class TestAxby(unittest.TestCase):
             done, point = axby.next()
             assert(done)
             axby.cleanup()
+
+class TestSearch(unittest.TestCase):
+    PRIMES = [4294967291, 4294967279]
+
+    def __get_gold(self, maxb, maxp):
+        results = set()
+        regex = re.compile(r"(\d+)\^(\d+) \+ (\d+)\^(\d+)")
+        filename = "gold/danvk_%dx%d.dat" % (maxb, maxp)
+        with open(filename) as f:
+            for line in f.readlines():
+                m = regex.match(line)
+                if not m:
+                    continue
+                a = int(m.group(1))
+                x = int(m.group(2))
+                b = int(m.group(3))
+                y = int(m.group(4))
+                results.add((a, x, b, y))
+        return results
+
+    def __check_gold(self, maxb, maxp, primes):
+        results = set()
+        search = beal.search(maxb, maxp, primes)
+        for a in range(1, maxb+1):
+            hits = search.search(a)
+            results.update(set(hits))
+        self.assertEqual(results, self.__get_gold(maxb, maxp))
+
+    def test_100x100(self):
+        self.__check_gold(100, 100, self.PRIMES)
+
+    def test_300x300(self):
+        self.__check_gold(300, 300, self.PRIMES)
+
+    def test_500x500(self):
+        self.__check_gold(500, 500, self.PRIMES)
+
+    def test_1000x1000(self):
+        self.__check_gold(1000, 1000, self.PRIMES)
 
 if __name__ == '__main__':
     unittest.main()
