@@ -9,7 +9,7 @@ There is a monetary prize offered by Andrew Beal for a proof or counterexample t
 * http://norvig.com/beal.html 
 * http://www.danvk.org/wp/beals-conjecture/
 
-I'll start by describing the simplest algorithm for conducting a counterexample search, and then iteratively refine it with various optimizations. I'll show how scaling this simple algorithm hits a wall very quickly, and describe new optimizations that let us expand the search space over what is possible with the simple algorithm. Finally I'll describe how we've restructure the algorithm to allow us to speed-up the search through parallelization.
+First we will describe the simplest algorithm for conducting a counterexample search, and then iteratively refine it with  various optimizations. Next we will how scaling this simple algorithm hits a wall very quickly, and then describe additional optimizations that let us expand the search space over what is possible with the simple algorithm. The optimizations and search techniques we use have all been considered in previous efforts. Finally we'll describe our new implementation that distributes the problem allowing us to explore problem sizes larger than have been considered in previous efforts.
  
 ## Counterexample Search
 
