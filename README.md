@@ -4,10 +4,12 @@ Beal's Conjecture is a math thing. It says that if `a^x + b^y = c^z`, where a, b
 
 There is a monetary prize offered by Andrew Beal for a proof or counterexample to the conjecture. More information about the prize can be found here http://www.ams.org/profession/prizes-awards/ams-supported/beal-prize. This project aims to expand the covered search space over previous efforts by using a distributed search strategy.
 
-#### Previous Efforts:
+#### Previous Efforts
 
 * http://norvig.com/beal.html 
 * http://www.danvk.org/wp/beals-conjecture/
+
+#### Overview
 
 First we will describe the simplest algorithm for conducting a counterexample search, and then iteratively refine it with  various optimizations. Next we will how scaling this simple algorithm hits a wall very quickly, and then describe additional optimizations that let us expand the search space over what is possible with the simple algorithm. The optimizations and search techniques we use have all been considered in previous efforts. Finally we'll describe our new implementation that distributes the problem allowing us to explore problem sizes larger than have been considered in previous efforts.
  
