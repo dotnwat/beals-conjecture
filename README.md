@@ -23,10 +23,10 @@ for a in range(1, max_base+1):
 A candidate verison of the `check` function might do something like the following:
 
 ```python
-    def check(a, x, b, y, c, z):
-      axby = pow(a, x) + pow(b, y)
-        cz = pow(c, z)
-      if axby == cz and gcd(a, b) == 1 and gcd(b, c) == 1:
+def check(a, x, b, y, c, z):
+    axby = pow(a, x) + pow(b, y)
+    cz = pow(c, z)
+    if axby == cz and gcd(a, b) == 1 and gcd(b, c) == 1:
         print "found counterexample:", a, x, b, y, c, z
 ```
 
@@ -35,8 +35,8 @@ A candidate verison of the `check` function might do something like the followin
 Since `a^x + b^y` is communative we don't have to bother testing `b^y + a^x`. This can be incorporated into the algorithm above by adjusting the upper bound of the values assigned to `b`:
 
 ```python
-    for a in range(1, max_base+1):
-      for b in range(1, a+1):
+for a in range(1, max_base+1):
+    for b in range(1, a+1):
         ...
 ```
 
@@ -45,10 +45,10 @@ Since `a^x + b^y` is communative we don't have to bother testing `b^y + a^x`. Th
 Since we only care about counterexamples we don't need to check any points where the bases have a common prime. This means that when iterating over the points in the space we can skip points where any two of the bases (e.g. `a` and `b`) have a common prime factor.
 
 ```python
-    for a in range(1, max_base+1):
-      for b in range(1, a+1):
+for a in range(1, max_base+1):
+    for b in range(1, a+1):
         if fractions.gcd(a, b) > 1:
-          continue
+            continue
         ...
 ```
 
