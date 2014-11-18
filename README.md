@@ -10,6 +10,7 @@ The search space for this problem is very large. For instance, taking a maximum 
 
 The following is a naive algorithm for conducting the counteexample search:
 
+```python
     for a in range(1, max_base+1):
       for b in range(1, max_base+1):
         for x in range(3, max_pow+1):
@@ -17,6 +18,7 @@ The following is a naive algorithm for conducting the counteexample search:
             for c in range(1, max_pow+1):
               for z in range(3, max_pow+1):
                 check(a, x, b, y, c, z)
+```
 
 A candidate verison of the `check` function might do something like the following:
 
