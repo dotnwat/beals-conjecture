@@ -41,6 +41,8 @@ def check(a, x, b, y, c, z):
         print "found counterexample:", a, x, b, y, c, z
 ```
 
+I ran this algorithm for an hour and saw xxx. That's % of the total space. Even if this were re-written in highly optimized C this is far too slow.
+
 ### Optimization 1
 
 Since `a^x + b^y` is communative we don't have to bother testing `b^y + a^x`. This can be incorporated into the algorithm above by adjusting the upper bound of the values assigned to `b`:
@@ -50,6 +52,8 @@ for a in range(1, max_base+1):
     for b in range(1, a+1):
         ...
 ```
+
+Eliminating 50% is really great, but it isn't good enough.
 
 ### Optimization 2
 
