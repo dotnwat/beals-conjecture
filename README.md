@@ -41,7 +41,7 @@ def check(a, x, b, y, c, z):
         print "found counterexample:", a, x, b, y, c, z
 ```
 
-I ran this algorithm for an hour with max_base = max_pow = 100 and saw xxx. That's % of the total space. Even if this were re-written in highly optimized C this is far too slow. count = 859796767, 85 minutes.
+I ran this algorithm for an hour. That's % of the total space. Even if this were re-written in highly optimized C this is far too slow. count = 859796767, 85 minutes, or about 0.0000000859796767% of total space where base and exponents are 1000.
 
 ### Optimization 1
 
