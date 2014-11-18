@@ -37,7 +37,7 @@ A candidate verison of the `check` function might do something like the followin
 def check(a, x, b, y, c, z):
     axby = pow(a, x) + pow(b, y)
     cz = pow(c, z)
-    if axby == cz and gcd(a, b) == 1 and gcd(b, c) == 1:
+    if axby == cz and gcd(a, b) == 1 and gcd(a, c) == 1 and gcd(b, c) == 1:
         print "found counterexample:", a, x, b, y, c, z
 ```
 
