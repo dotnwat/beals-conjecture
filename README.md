@@ -9,15 +9,13 @@ There is a monetary prize offered by Andrew Beal for a proof or counterexample t
 * http://norvig.com/beal.html 
 * http://www.danvk.org/wp/beals-conjecture/
 
-#### Overview
-
-First we will describe the simplest algorithm for conducting a counterexample search, and then iteratively refine it with  various optimizations. Next we will how scaling this simple algorithm hits a wall very quickly, and then describe additional optimizations that let us expand the search space over what is possible with the simple algorithm. The optimizations and search techniques we use have all been considered in previous efforts. Finally we'll describe our new implementation that distributes the problem allowing us to explore problem sizes larger than have been considered in previous efforts.
- 
-### Counterexample Search
+#### Problem Overview
 
 The conceptual strategy for conducting a counterexample search is to compute all possible points `(a, x, b, y, c, z)` and then evaluate the expression `a^x + b^y = c^z`. If the expression holds and the bases do not have a common prime factor, then a counterexample has been found.
 
 The core challenge behind a counterexample search strategy is dealing with the enormous size of the space being examined. For instance, taking a maximum value for the bases and exponents of `1000` we end up with `1000^6` points. That number is so large that a 1GHz CPU that can do 1 billion cycles per second will take 1 billion seconds just to execute `1000^6` 1 cycle instructions. And even evaluating the expression `a^x + b^y = c^z` takes far more than 1 cycle, so we need to be smart about the search.
+
+First we will describe the simplest algorithm for conducting a counterexample search, and then iteratively refine it with  various optimizations. Next we will how scaling this simple algorithm hits a wall very quickly, and then describe additional optimizations that let us expand the search space over what is possible with the simple algorithm. The optimizations and search techniques we use have all been considered in previous efforts. Finally we'll describe our new implementation that distributes the problem allowing us to explore problem sizes larger than have been considered in previous efforts.
 
 ## Generation 1 Algorithm
 
