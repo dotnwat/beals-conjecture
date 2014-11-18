@@ -1,16 +1,21 @@
-## Beal's Conjecture
+# Distributed search for a counterexample to Beal's Conjecture
 
-If `a^x + b^y = c^z`, where a, b, c, x, y, and z are positive integers and x, y and z are all greater than 2, then a, b, and c must have a common prime factor.
+Beal's Conjecture is a math thing. It says that if `a^x + b^y = c^z`, where a, b, c, x, y, and z are positive integers and x, y and z are all greater than 2, then a, b, and c must have a common prime factor.
 
-There is a monetary prize offered for a proof or counterexample to the conjecture. There is more information about that prize here http://www.ams.org/profession/prizes-awards/ams-supported/beal-prize.
+There is a monetary prize offered by Andrew Beal for a proof or counterexample to the conjecture. More information about the prize can be found here http://www.ams.org/profession/prizes-awards/ams-supported/beal-prize. This project aims to expand the covered search space over previous efforts by using a distributed search strategy.
 
+#### Previous Efforts:
+
+* http://norvig.com/beal.html 
+* http://www.danvk.org/wp/beals-conjecture/
+
+I'll start by describing the simplest algorithm for conducting a counterexample search, and then iteratively refine it with various optimizations. I'll show how scaling this simple algorithm hits a wall very quickly, and describe new optimizations that let us expand the search space over what is possible with the simple algorithm. Finally I'll describe how we've restructure the algorithm to allow us to speed-up the search through parallelization.
+ 
 ## Counterexample Search
 
 The conceptual strategy for conducting a counterexample search is to compute all possible points `(a, x, b, y, c, z)` and then evaluate the expression `a^x + b^y = c^z`. If the expression holds and the bases do not have a common prime factor, then a counterexample has been found.
 
 The search space for this problem is very large. For instance, taking a maximum value for the bases and exponents of `1000` we end up with `1000^6` points. That number is so large that a 1GHz CPU that can do 1 billion cycles per second will take 1 billion seconds just to execute `1000^6` 1 cycle instructures. And evaluating the expression `a^x + b^y = c^z` takes far more than 1 cycle. We need to be smarter.
-
-I'll start by describing the simplest algorithm for conducting a counterexample search, and then iteratively refine it with various optimizations. I'll show how scaling this simple algorithm hits a wall very quickly, and describe new optimizations that let us expand the search space over what is possible with the simple algorithm. Finally I'll describe how we've restructure the algorithm to allow us to speed-up the search through parallelization.
 
 ## Generation 1 Algorithm
 
