@@ -74,9 +74,11 @@ Notice above that for each left-hand-side value that is computed (the outer four
       
 ```
 
-We can use memory to pre-compute the c^z values and search for them rather than computing them.
+### Optimization 4
 
-Avoid recomputation
+We can re-use the computation of c^z by saving the results of computing the c^z values for searching
+
+This is pretty good, really. We can construct a parallel version by breaking up the for loop and having worker nodes evaluate different disjoint partitions of the space.
 
 # Motivation
 
