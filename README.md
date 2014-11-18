@@ -23,9 +23,12 @@ The following Python psuedo-code shows a basic example of how to iterate over th
         if gcd(a, b) > 1:
           continue
         for x in range(3, max_pow+1):
-          for y in range(1, max_pow+1):
-            for c in range(3, max_pow+1):
-              check(a, b, x, y, c, z)
+          for y in range(3, max_pow+1):
+            for c in range(1, max_pow+1):
+                for z in range(3, max_pow+1):
+                    check(a, x, b, y, c, z)
+
+
 
 Avoid recomputation
 
