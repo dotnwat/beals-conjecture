@@ -2,6 +2,8 @@
 
 If `a^x + b^y = c^z`, where a, b, c, x, y, and z are positive integers and x, y and z are all greater than 2, then a, b, and c must have a common prime factor.
 
+There is a monetary prize offered for a proof or counterexample to the conjecture. There is more information about that prize here http://www.ams.org/profession/prizes-awards/ams-supported/beal-prize.
+
 ## Counterexample Search
 
 The conceptual strategy for conducting a counterexample search is to compute all possible points `(a, x, b, y, c, z)` and then evaluate the expression `a^x + b^y = c^z`. If the expression holds and the bases do not have a common prime factor, then a counterexample has been found.
@@ -84,6 +86,9 @@ We can re-use the computation of c^z by saving the results of computing the c^z 
 
 This is pretty good, really. We can construct a parallel version by breaking up the for loop and having worker nodes evaluate different disjoint partitions of the space.
 
-# Motivation
+# Open Questions
 
-http://www.andrewbeal.com/andybeal/media/medialibrary/Documents/Beal-Conjecture-Prize-Increased-130603.pdf
+* Are there other ways that the state space can be trimmed?
+* Are there classes of points that are more interesting to test (e.g. large exponents)?
+* Are there methods for making the modulo-based filtering more effective (e.g. larger primes)
+* What improvements can we get by using GPU-based acceleration (e.g. CUDA or OpenCL)?
