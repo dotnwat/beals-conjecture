@@ -1,4 +1,4 @@
-# Distributed search for a counterexample to Beal's Conjecture
+# Distributed search for a counterexample to Beal's Conjecture!
 
 Beal's Conjecture is a math thing. It says that if `a^x + b^y = c^z`, where a, b, c, x, y, and z are positive integers and x, y and z are all greater than 2, then a, b, and c must have a common prime factor.
 
