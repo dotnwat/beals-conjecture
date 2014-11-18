@@ -36,6 +36,11 @@ A candidate verison of the `check` function might do something like the followin
       if axby == cz and gcd(a, b) == 1 and gcd(b, c) == 1:
         print "found counterexample:", a, x, b, y, c, z
 
+Notice above that for each left-hand-side value that is computed (the outer four for loops) all of the possible right-hand-side values are re-computed. Since the complexity of the right-hand-side is relatively small, we can pre-compute all possible `c^z` values and *search* for the match rather than computing all of the possible values.
+
+
+We can use memory to pre-compute the c^z values and search for them rather than computing them.
+
 Avoid recomputation
 
 # Motivation
