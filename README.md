@@ -1,6 +1,6 @@
-Beal's Conjecture
+## Beal's Conjecture
 
-If a^x + b^y = c^z, where a, b, c, x, y, and z are positive integers and x, y and z are all greater than 2, then a, b, and c must have a common prime factor.
+If `a^x + b^y = c^z`, where a, b, c, x, y, and z are positive integers and x, y and z are all greater than 2, then a, b, and c must have a common prime factor.
 
 The conceptual strategy for conducting a counter-example search is to compute all possible points `(a, x, b, y, c, z)` and then evaluate the expression `a^x + b^y = c^z`. If the expression holds and the bases do not have a common prime factor, then a counter-example has been found.
 
