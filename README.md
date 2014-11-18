@@ -16,7 +16,7 @@ Since we only care about counterexamples we don't need to check any points where
 
 ## Naive Algorithm 1
 
-The following Python psuedo-code shows a basic example of how to iterate over the space. The `check` function below would evaluate the expression and check that the bases did not have a common prime factor.
+The following Python psuedo-code shows a basic example of how to iterate over the space.
 
     for a in range(1, max_base+1):
       for b in range(1, a+1):
@@ -28,7 +28,13 @@ The following Python psuedo-code shows a basic example of how to iterate over th
               for z in range(3, max_pow+1):
                 check(a, x, b, y, c, z)
 
+A candidate verison of the `check` function might do something like the following:
 
+    def check(a, x, b, y, c, z):
+      axby = pow(a, x) + pow(b, y)
+        cz = pow(c, z)
+      if axby == cz and gcd(a, b) == 1 and gcd(b, c) == 1:
+        print "found counterexample:", a, x, b, y, c, z
 
 Avoid recomputation
 
