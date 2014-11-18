@@ -41,7 +41,7 @@ def check(a, x, b, y, c, z):
         print "found counterexample:", a, x, b, y, c, z
 ```
 
-I ran this algorithm for an hour and saw xxx. That's % of the total space. Even if this were re-written in highly optimized C this is far too slow.
+I ran this algorithm for an hour with max_base = max_pow = 100 and saw xxx. That's % of the total space. Even if this were re-written in highly optimized C this is far too slow.
 
 ### Optimization 1
 
@@ -93,7 +93,7 @@ Notice above that for each left-hand-side value that is computed (the outer four
 
 We can re-use the computation of c^z by saving the results of computing the c^z values for searching
 
-Now we are getting somewhere. This is actually a simplified version of the approach used by Peter Norvig. His results from several years ago computed several different ranges. But new methods are needed to go beyond what he doing.
+Now we are getting somewhere. This is actually a simplified version of the approach used by Peter Norvig. His results from several years ago computed several different ranges (100x100 is done in 3minutes). But new methods are needed to go beyond what he is doing (e.g. 1000x100 is 19 hours and 100x10000 took 39 days).
 
 This is pretty good, really. We can construct a parallel version by breaking up the for loop and having worker nodes evaluate different disjoint partitions of the space.
 
