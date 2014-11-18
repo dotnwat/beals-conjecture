@@ -13,7 +13,7 @@ There is a monetary prize offered by Andrew Beal for a proof or counterexample t
 
 First we will describe the simplest algorithm for conducting a counterexample search, and then iteratively refine it with  various optimizations. Next we will how scaling this simple algorithm hits a wall very quickly, and then describe additional optimizations that let us expand the search space over what is possible with the simple algorithm. The optimizations and search techniques we use have all been considered in previous efforts. Finally we'll describe our new implementation that distributes the problem allowing us to explore problem sizes larger than have been considered in previous efforts.
  
-## Counterexample Search
+### Counterexample Search
 
 The conceptual strategy for conducting a counterexample search is to compute all possible points `(a, x, b, y, c, z)` and then evaluate the expression `a^x + b^y = c^z`. If the expression holds and the bases do not have a common prime factor, then a counterexample has been found.
 
