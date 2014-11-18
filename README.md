@@ -8,6 +8,10 @@ The conceptual strategy for conducting a counterexample search is to compute all
 
 The search space for this problem is very large. For instance, taking a maximum value for the bases and exponents of `1000` we end up with `1000^6` points. That number is so large that a 1GHz CPU that can do 1 billion cycles per second will take 1 billion seconds just to execute `1000^6` 1 cycle instructures. And evaluating the expression `a^x + b^y = c^z` takes far more than 1 cycle. We need to be smarter.
 
+I'll start by describing the simplest algorithm for conducting a counterexample search, and then iteratively refine it with various optimizations. I'll show how scaling this simple algorithm hits a wall very quickly, and describe new optimizations that let us expand the search space over what is possible with the simple algorithm. Finally I'll describe how we've restructure the algorithm to allow us to speed-up the search through parallelization.
+
+## Generation 1 Algorithm
+
 The following is a naive algorithm for conducting the counteexample search:
 
 ```python
