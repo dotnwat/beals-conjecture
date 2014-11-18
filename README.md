@@ -36,7 +36,9 @@ A candidate verison of the `check` function might do something like the followin
       if axby == cz and gcd(a, b) == 1 and gcd(b, c) == 1:
         print "found counterexample:", a, x, b, y, c, z
 
-Notice above that for each left-hand-side value that is computed (the outer four for loops) all of the possible right-hand-side values are re-computed. Since the complexity of the right-hand-side is relatively small, we can pre-compute all possible `c^z` values and *search* for the match rather than computing all of the possible values. The following is a revised version of the above the previous algorithm that avoids the recomputation of all `c^z` values.
+### Optimization 3
+
+Notice above that for each left-hand-side value that is computed (the outer four for loops) all of the possible right-hand-side values are re-computed. Since the complexity of the right-hand-side is relatively small, we can pre-compute all possible `c^z` values and *search* for the match using a data structure such as a hash table. The following is a revised version of the above the previous algorithm that avoids the recomputation of all `c^z` values.
 
     for c in range(1, max_base+1):
       for z in range(3, max_pow+1):
