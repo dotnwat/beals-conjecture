@@ -36,8 +36,23 @@ A candidate verison of the `check` function might do something like the followin
       if axby == cz and gcd(a, b) == 1 and gcd(b, c) == 1:
         print "found counterexample:", a, x, b, y, c, z
 
-Notice above that for each left-hand-side value that is computed (the outer four for loops) all of the possible right-hand-side values are re-computed. Since the complexity of the right-hand-side is relatively small, we can pre-compute all possible `c^z` values and *search* for the match rather than computing all of the possible values.
+Notice above that for each left-hand-side value that is computed (the outer four for loops) all of the possible right-hand-side values are re-computed. Since the complexity of the right-hand-side is relatively small, we can pre-compute all possible `c^z` values and *search* for the match rather than computing all of the possible values. The following is a revised version of the above the previous algorithm that avoids the recomputation of all `c^z` values.
 
+    for c in range(1, max_base+1):
+      for z in range(3, max_pow+1):
+        cz[val].append(c, z)
+        
+    for a in range(1, max_base+1):
+      for b in range(1, a+1):
+        if gcd(a, b) > 1:
+          continue
+        for x in range(3, max_pow+1):
+          for y in range(3, max_pow+1):
+            check(a, x, b, y)
+            
+    def check(a, x, b, y):
+      axby = pow(a, x) + pow(b, y)
+      
 
 We can use memory to pre-compute the c^z values and search for them rather than computing them.
 
