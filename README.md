@@ -93,7 +93,11 @@ Notice above that for each left-hand-side value that is computed (the outer four
 
 We can re-use the computation of c^z by saving the results of computing the c^z values for searching
 
+Now we are getting somewhere. This is actually a simplified version of the approach used by Peter Norvig. His results from several years ago computed several different ranges. But new methods are needed to go beyond what he doing.
+
 This is pretty good, really. We can construct a parallel version by breaking up the for loop and having worker nodes evaluate different disjoint partitions of the space.
+
+The major problem with this is the cost in size to maintain the index of infinite percision numbers with a lot digits, as well as the huge number of cycles needed to make comparisons between these large integers.
 
 # Open Questions
 
@@ -101,3 +105,4 @@ This is pretty good, really. We can construct a parallel version by breaking up 
 * Are there classes of points that are more interesting to test (e.g. large exponents)?
 * Are there methods for making the modulo-based filtering more effective (e.g. larger primes)
 * What improvements can we get by using GPU-based acceleration (e.g. CUDA or OpenCL)?
+* Can we make searching the `c^z` space even faster by taking advantage of cache locality?
