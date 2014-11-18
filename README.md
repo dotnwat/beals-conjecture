@@ -22,34 +22,41 @@ The following is a naive algorithm for conducting the counteexample search:
 
 A candidate verison of the `check` function might do something like the following:
 
+```python
     def check(a, x, b, y, c, z):
       axby = pow(a, x) + pow(b, y)
         cz = pow(c, z)
       if axby == cz and gcd(a, b) == 1 and gcd(b, c) == 1:
         print "found counterexample:", a, x, b, y, c, z
+```
 
 ### Optimization 1
 
 Since `a^x + b^y` is communative we don't have to bother testing `b^y + a^x`. This can be incorporated into the algorithm above by adjusting the upper bound of the values assigned to `b`:
 
+```python
     for a in range(1, max_base+1):
       for b in range(1, a+1):
         ...
+```
 
 ### Optimization 2
 
 Since we only care about counterexamples we don't need to check any points where the bases have a common prime. This means that when iterating over the points in the space we can skip points where any two of the bases (e.g. `a` and `b`) have a common prime factor.
 
+```python
     for a in range(1, max_base+1):
       for b in range(1, a+1):
         if fractions.gcd(a, b) > 1:
           continue
         ...
+```
 
 ### Optimization 3
 
 Notice above that for each left-hand-side value that is computed (the outer four for loops) all of the possible right-hand-side values are re-computed. Since the complexity of the right-hand-side is relatively small, we can pre-compute all possible `c^z` values and *search* for the match using a data structure such as a hash table. The following is a revised version of the above the previous algorithm that avoids the recomputation of all `c^z` values.
 
+```python
     for c in range(1, max_base+1):
       for z in range(3, max_pow+1):
         cz[val].append(c, z)
@@ -65,6 +72,7 @@ Notice above that for each left-hand-side value that is computed (the outer four
     def check(a, x, b, y):
       axby = pow(a, x) + pow(b, y)
       
+```
 
 We can use memory to pre-compute the c^z values and search for them rather than computing them.
 
