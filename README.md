@@ -41,7 +41,7 @@ def check(a, x, b, y, c, z):
         print "found counterexample:", a, x, b, y, c, z
 ```
 
-I ran this algorithm for 85 minutes. In that period of time `859,796,767` points were examined. Considering the size of the state space with maximum base and exponent values of `1000`, that is approximately `0.0000000859796767%` of the total space covered. In reality it will probably run much slower than this short experiment doesn't include the very large exponents that take a lot of effort to compute. This test was written in Python, but even when written in optimized C, this strategy will simply not scale with search spaces this size. In order to make progress we need to cut down on the amount of work we are doing.
+I ran this algorithm for 85 minutes. In that period of time `859,796,767` points were examined. Considering the size of the state space with maximum base and exponent values of `1000`, that is approximately `0.0000000859796767 %` of the total space covered. In reality it will probably run much slower than this short experiment doesn't include the very large exponents that take a lot of effort to compute. This test was written in Python, but even when written in optimized C, this strategy will simply not scale with search spaces this size. In order to make progress we need to cut down on the amount of work we are doing.
 
 ### Optimization 1
 
