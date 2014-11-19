@@ -95,7 +95,7 @@ And now check avoids computing c^z and instead looks it up.
 ```python
 def check(a, x, b, y):
     axby = pow(a, x) + pow(b, y)
-    if axby in cz_values:
+    if axby in cz_values: # avoid empty list creation
         for c, z in cz_values[axby]:
             if gcd(a, b) == 1 and gcd(a, c) == 1 and gcd(b, c) == 1:
                 print "counterexample found:", a, x, b, y, c, z
