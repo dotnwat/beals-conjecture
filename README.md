@@ -31,7 +31,7 @@ for a in range(1, max_base+1):
                         check(a, x, b, y, c, z)
 ```
 
-A candidate verison of the `check` function might do something like the following:
+A candidate version of the `check` function might do something like the following:
 
 ```python
 def check(a, x, b, y, c, z):
@@ -44,7 +44,7 @@ I ran this algorithm for 85 minutes. In that period of time `859,796,767` points
 
 ### Optimization 1
 
-Since `a^x + b^y` is communative we don't have to bother also testing `b^y + a^x`. This can be incorporated into the algorithm above by adjusting the upper bound of the values assigned to `b`:
+Since `a^x + b^y` is commutative we don't have to bother also testing `b^y + a^x`. This can be incorporated into the algorithm above by adjusting the upper bound of the values assigned to `b`:
 
 ```python
 for a in range(1, max_base+1):
@@ -104,7 +104,7 @@ def check(a, x, b, y):
                 print "counterexample found:", a, x, b, y, c, z
 ```
 
-It may cost a few seconds to pre-compute all of the `c^z` values for a very large search space, but since we get to amatorize that cost across the all points in the space we effectively reduce the cost of the search by a factor proportional to the size of the `c^z` space!
+It may cost a few seconds to pre-compute all of the `c^z` values for a very large search space, but since we get to amortize that cost across the all points in the space we effectively reduce the cost of the search by a factor proportional to the size of the `c^z` space!
 
 ### Optimization 4
 
@@ -137,15 +137,15 @@ Now we are getting somewhere. This approach closely resembles the approach used 
 
 We can distribute the search problem by assigning worker nodes disjoint partitions of the search space. However, the mechanism we have described uses infinite precision arithmetic which adds a lot of overhead both in time and space, limiting per-node scalability. For instance, the value `1000^1000` contains about 3000 digits. Operations on numbers this large can't be performed as efficiently compared to numbers that are stored in 64-bit registers.
 
-In the previous approach described here http://norvig.com/beal.html, Peter Norvig proposed doing all arithmetic modulo large 64-bit prime numbers. This has the advantage that all operations are very efficient, but results may be false positives and must be verified. However, if we can sufficiently reduce the number of potential counterexamples, the savings realized from performing verification using infinite precision arthmetic on a small percentage of the total space may be far outweighted by the cost of using infinite precision arthmetic exclusively. This is exactly the approach taken in http://www.danvk.org/wp/beals-conjecture/. Next I'll describe how to incorporate modulo arthmetic to make the search more efficient.
+In the previous approach described here http://norvig.com/beal.html, Peter Norvig proposed doing all arithmetic modulo large 64-bit prime numbers. This has the advantage that all operations are very efficient, but results may be false positives and must be verified. However, if we can sufficiently reduce the number of potential counterexamples, the savings realized from performing verification using infinite precision arithmetic on a small percentage of the total space may be far outweighed by the cost of using infinite precision arithmetic exclusively. This is exactly the approach taken in http://www.danvk.org/wp/beals-conjecture/. Next I'll describe how to incorporate modulo arithmetic to make the search more efficient.
 
 # Generation 2 Algorithm
 
-In the previous section we described the 1st generation algorithm and a set of optimizations that significantly improve performance over a naive implementation. However, the 1st generation algorithm used infinite precision arthmetic which limits scalability because of the costs associated with operations on large numbers. Performing modulo arthmetic can circumvent the problem.
+In the previous section we described the 1st generation algorithm and a set of optimizations that significantly improve performance over a naive implementation. However, the 1st generation algorithm used infinite precision arithmetic which limits scalability because of the costs associated with operations on large numbers. Performing modulo arithmetic can circumvent the problem.
 
-The motivation for using modulo arthmetic is to reduce the number of bits needed to represent the values we are working with. While space savings is important, numeric operations on values that fit into CPU registers are extremely fast compared to the algorithms used to perform infinite percision arthmetic. The approach is based off the observation that if `a^x + b^y = c^z` then for a value `p1`, `(a^x + b^y) mod p1 = c^z mod p1`. By keeping `p1` small enough, we can force all values to fit within a CPU register. For instance, `789^999` is a number with 2895 digits. However, `789^999 mod 4294967291` is `1153050910` which easily fits into a 64-bit CPU register.
+The motivation for using modulo arithmetic is to reduce the number of bits needed to represent the values we are working with. While space savings is important, numeric operations on values that fit into CPU registers are extremely fast compared to the algorithms used to perform infinite precision arithmetic. The approach is based off the observation that if `a^x + b^y = c^z` then for a value `p1`, `(a^x + b^y) mod p1 = c^z mod p1`. By keeping `p1` small enough, we can force all values to fit within a CPU register. For instance, `789^999` is a number with 2895 digits. However, `789^999 mod 4294967291` is `1153050910` which easily fits into a 64-bit CPU register.
 
-The obvious problem with sacrificing precision is false positives. That is, the space of possible values is far greater than the size of the modulo meaning that many distinct values may be identical modulo the same number. So how do we reduce the number of false postiives? Observing that if two numbers are identical modulo a value `p1` then they are identical modulo a different value `p2`, we can construct a simple filter by performing arthmetic modulo multiple numbers and ensuring that equality holds in all cases. There is a more detailed description of this approach written about here http://www.danvk.org/wp/beals-conjecture/, which also describes why large prime numbers are good choice for the modulus.
+The obvious problem with sacrificing precision is false positives. That is, the space of possible values is far greater than the size of the modulo meaning that many distinct values may be identical modulo the same number. So how do we reduce the number of false positives? Observing that if two numbers are identical modulo a value `p1` then they are identical modulo a different value `p2`, we can construct a simple filter by performing arithmetic modulo multiple numbers and ensuring that equality holds in all cases. There is a more detailed description of this approach written about here http://www.danvk.org/wp/beals-conjecture/, which also describes why large prime numbers are good choice for the modulus.
 
 The changes to the algorithm are relatively modest. Each of the search structures used to store and cache the `c^z` values is parameterized on the prime numbers. So for instance to look up `10^20 mod 4294967291` we use `powers[4294967291][10][20]`.
 
