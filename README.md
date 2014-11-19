@@ -141,7 +141,9 @@ In the previous approach described here http://norvig.com/beal.html, Peter Norvi
 
 # Generation 2 Algorithm
 
-If `x = y` then `x mod p1 = y mod p1`
+The motivation for using modulo arthmetic is to reduce the size (i.e. the number of bits in a representation) of the values we are working with. While space savings is important, numeric operations on values that fit into CPU registers are extremely fast compared to the algorithms used to perform infinite percision arthmetic. The approach is based off the observation that if `a^x + b^y = c^z` then for a value `p1`, `(a^x + b^y) mod p1 = c^z mod p1`. By keeping `p1` small enough, we can force all values to fit within a CPU register. For instance, `789^999` is a number with 2895 digits. However, `789^999 mod 4294967291` is `1153050910` which easily fits into a 64-bit CPU register.
+
+The obvious problem with sacrificing precision is false positives. That is, the space of possible values is far greater than the size of the modulo meaning that many distinct values may be identical modulo the same number. So how do we reduce the number of false postiives? Observing that if two numbers are identical modulo a value `p1` then they are identical modulo a different value `p2`, we can construct a simple filter by performing arthmetic modulo multiple numbers and ensuring that equality holds in all cases. There is a more detailed description of this approach written about here http://www.danvk.org/wp/beals-conjecture/, which also describes why large prime numbers are good choice for the modulus.
 
 # Open Questions
 
