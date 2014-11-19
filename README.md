@@ -81,16 +81,19 @@ for c in range(1, max_base+1):
         value = pow(c, z)
         cz[value].append((c, z))
 
-def axby_space(max_base, max_pow):
-    for a in range(1, max_base+1):
-        for b in range(1, a+1):
-            if gcd(a, b) > 1:
-                continue
-            for x in range(3, max_pow+1):
-                for y in range(3, max_pow+1):
-                    yield (a, x, b, y)
+for a in range(1, max_base+1):
+    for b in range(1, a+1):
+        if gcd(a, b) > 1:
+            continue
+        for x in range(3, max_pow+1):
+            for y in range(3, max_pow+1):
+                check(a, x, b, y)
+```
 
-for a, x, b, y in axby_space(max_base, max_pow):
+And now check avoids computing c^z and instead looks it up.
+
+```python
+def check(a, x, b, y):
     axby = pow(a, x) + pow(b, y)
     for c, z in cz_values[axby]:
         if gcd(a, b) == 1 and gcd(a, c) == 1 and gcd(b, c) == 1:
