@@ -108,7 +108,7 @@ It may cost a few seconds to pre-compute all of the `c^z` values for a very larg
 
 ### Optimization 4
 
-Notice that to compute the values of `c^z` to store in a search structure we also compute all of the powers that are needed for evaluating `a^x + b^y`. Since `pow` isn't a cheap function, we can also save each value to avoid recomputing terms in the equation.
+Notice that to compute the values of `c^z` to store in a search structure we also compute all of the powers that are needed for evaluating `a^x + b^y`. Since `pow` isn't a cheap function, we can also save each value to avoid recomputing terms in the equation. Here we modify the way we populate the `c^z` search structure to also cache the individual powers:
 
 ```python
 cz_values = defaultdict(lambda: []) # pow(c, z) -> { (c, z) }
@@ -119,9 +119,10 @@ for c in range(1, max_base+1):
         value = pow(c, z)
         cz[value].append((c, z))
         powers[c][z] = value
+...
 ```
 
-Then
+Then in the `check` function we lookup each `a^x` and `b^y` to avoid the expensive computation of the `pow` function.
 
 ```python
 def check(a, x, b, y):
