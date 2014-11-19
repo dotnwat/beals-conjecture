@@ -137,7 +137,7 @@ Now we are getting somewhere. This approach closely resembles the approach used 
 
 This approach in general works well. In fact we can distribute the search by assigning worker nodes disjoint partitions of the search space. However, this approach uses infinite precision arithmetic which adds a lot of overhead both in time and space, limiting per-node scalability. For instance, the value `1000^1000` contains about 3000 digits. Operations on numbers this large can't be performed as efficiently compared to numbers that are stored in 64-bit registers.
 
-
+In the previous approach http://norvig.com/beal.html Peter Norvig proposed doing all arithmetic modulo large 64-bit prime numbers. In this way all artithmetic is efficient, but 
 
 # Generation 2 Algorithm
 
