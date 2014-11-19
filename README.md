@@ -137,7 +137,7 @@ Now we are getting somewhere. This approach closely resembles the approach used 
 
 This approach in general works well. In fact we can distribute the search by assigning worker nodes disjoint partitions of the search space. However, this approach uses infinite precision arithmetic which adds a lot of overhead both in time and space, limiting per-node scalability. For instance, the value `1000^1000` contains about 3000 digits. Operations on numbers this large can't be performed as efficiently compared to numbers that are stored in 64-bit registers.
 
-In the previous approach http://norvig.com/beal.html Peter Norvig proposed doing all arithmetic modulo large 64-bit prime numbers. In this way all artithmetic is efficient, but 
+In the previous approach described here http://norvig.com/beal.html, Peter Norvig proposed doing all arithmetic modulo large 64-bit prime numbers. This has the advantage that all operations are very efficient, but results may be false positives and will need to be verified. This is exactly the approach taken in http://www.danvk.org/wp/beals-conjecture/. Next I'll describe how to incorporate modulo arthmetic to make the search more efficient.
 
 # Generation 2 Algorithm
 
