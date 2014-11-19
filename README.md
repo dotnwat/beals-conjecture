@@ -141,6 +141,8 @@ In the previous approach described here http://norvig.com/beal.html, Peter Norvi
 
 # Generation 2 Algorithm
 
+If `x = y` then `x mod p1 = y mod p1`
+
 # Open Questions
 
 * Are there other ways that the state space can be trimmed?
