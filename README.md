@@ -106,8 +106,8 @@ def check(a, x, b, y):
 We can re-use the computation of c^z by saving the results of computing the c^z values for searching
 
 ```python
-cz_values = defaultdict(lambda: [])
-powers = defaultdict(lambda: {})
+cz_values = defaultdict(lambda: []) # val -> { (c, z) }
+powers = defaultdict(lambda: {})    # (c, z) -> pow(c, z)
 
 for c in range(1, max_base+1):
     for z in range(3, max_pow+1):
