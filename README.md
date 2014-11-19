@@ -135,9 +135,9 @@ def check(a, x, b, y):
 
 Now we are getting somewhere. This approach closely resembles the approach used by Peter Norvig here http://norvig.com/beal.html, with the exception that there are some more efficient ways to cache data and build the search structure. Even in Python, this approach is pretty speedy. Norvig reports results for several different search spaces, including 3 minutes for `max_base = max_pow = 100`. Unfortunately the costs explode with large spaces such as 19 hours for  `max_pow = 1000` and `max_base = 100`, and 39 days `max_pow = 100` and `max_base = 10,000`. 
 
+This approach in general works well. In fact we can distribute the search by assigning worker nodes disjoint partitions of the search space. However, this approach uses infinite precision arithmetic which adds a lot of overhead both in time and space, limiting per-node scalability. For instance, the value `1000^1000` contains about 3000 digits. Operations on numbers this large can't be performed as efficiently compared to numbers that are stored in 64-bit registers.
 
-This is pretty good, really. We can construct a parallel version by breaking up the for loop and having worker nodes evaluate different disjoint partitions of the space.
-The major problem with this is the cost in size to maintain the index of infinite percision numbers with a lot digits, as well as the huge number of cycles needed to make comparisons between these large integers.
+
 
 # Generation 2 Algorithm
 
