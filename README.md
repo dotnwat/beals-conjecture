@@ -192,6 +192,8 @@ In the next section we describe an implementation in C++ that is designed to be 
 
 # Generation 3
 
+The current implementation uses all of the optimizations described above. This section is not yet complete.
+
 # Open Questions
 
 * Are there other ways that the state space can be trimmed?
