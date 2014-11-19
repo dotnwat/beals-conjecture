@@ -78,7 +78,8 @@ cz_values = defaultdict(lambda: [])
 
 for c in range(1, max_base+1):
     for z in range(3, max_pow+1):
-        cz[val].append(c, z)
+        value = pow(c, z)
+        cz[value].append((c, z))
 
 def axby_space(max_base, max_pow):
     for a in range(1, max_base+1):
@@ -99,6 +100,25 @@ for a, x, b, y in axby_space(max_base, max_pow):
 ### Optimization 4
 
 We can re-use the computation of c^z by saving the results of computing the c^z values for searching
+
+```python
+cz_values = defaultdict(lambda: [])
+powers = defaultdict(lambda: {})
+
+for c in range(1, max_base+1):
+    for z in range(3, max_pow+1):
+        value = pow(c, z)
+        cz[value].append((c, z))
+        powers[c][z] = value
+```
+
+Then
+
+```python
+for a, x, b, y in axby_space(max_base, max_pow):
+    axby = powers[a][x] + powers[b][y]
+    ...
+```
 
 Now we are getting somewhere. This is actually a simplified version of the approach used by Peter Norvig. His results from several years ago computed several different ranges (100x100 is done in 3minutes). But new methods are needed to go beyond what he is doing (e.g. 1000x100 is 19 hours and 100x10000 took 39 days).
 
