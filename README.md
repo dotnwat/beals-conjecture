@@ -133,7 +133,9 @@ def check(a, x, b, y):
                 print "counterexample found:", a, x, b, y, c, z
 ```
 
-Now we are getting somewhere. This is actually a simplified version of the approach used by Peter Norvig. His results from several years ago computed several different ranges (100x100 is done in 3minutes). But new methods are needed to go beyond what he is doing (e.g. 1000x100 is 19 hours and 100x10000 took 39 days).
+Now we are getting somewhere. This approach closely resembles the approach used by Peter Norvig here http://norvig.com/beal.html, with the exception that there are some more efficient ways to cache data and build the search structure. Even in Python, this approach is pretty speedy. Norvig reports results for several different search spaces, including 3 minutes for `max_base = max_pow = 100`. Unfortunately the costs explode with large spaces such as 19 hours for  `max_pow = 1000` and `max_base = 100`, and 39 days `max_pow = 100` and `max_base = 10,000`. 
+
+This is actually a simplified version of the approach used by Peter Norvig. His results from several years ago computed several different ranges (100x100 is done in 3minutes). But new methods are needed to go beyond what he is doing (e.g. 1000x100 is 19 hours and 100x10000 took 39 days).
 
 This is pretty good, really. We can construct a parallel version by breaking up the for loop and having worker nodes evaluate different disjoint partitions of the space.
 
