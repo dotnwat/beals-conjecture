@@ -1,8 +1,8 @@
 # Distributed search for a counterexample to Beal's Conjecture!
 
-Beal's Conjecture is a math thing. It says that if `a^x + b^y = c^z`, where a, b, c, x, y, and z are positive integers and x, y and z are all greater than 2, then a, b, and c must have a common prime factor.
+Beal's Conjecture says that if `a^x + b^y = c^z`, where a, b, c, x, y, and z are positive integers and x, y and z are all greater than 2, then a, b, and c must have a common prime factor.
 
-There is a monetary prize offered by Andrew Beal for a proof or counterexample to the conjecture. More information about the prize can be found here http://www.ams.org/profession/prizes-awards/ams-supported/beal-prize. This project aims to expand the covered search space over previous efforts by using a distributed search strategy.
+There is a monetary prize offered by Andrew Beal for a proof or counterexample to the conjecture. More information about the prize can be found here http://www.ams.org/profession/prizes-awards/ams-supported/beal-prize. This project aims to expand the size of the counterexample search space covered compared to previous efforts by using a distributed search strategy.
 
 #### Previous Efforts
 
@@ -13,13 +13,13 @@ There is a monetary prize offered by Andrew Beal for a proof or counterexample t
 
 The conceptual strategy for conducting a counterexample search is to compute all possible points `(a, x, b, y, c, z)` and then evaluate the expression `a^x + b^y = c^z`. If the expression holds and the bases do not have a common prime factor, then a counterexample has been found.
 
-The core challenge behind a counterexample search strategy is dealing with the enormous size of the space being examined. For instance, taking a maximum value for the bases and exponents of `1000` we end up with `1000^6` points. That number is so large that a 1GHz CPU that can do 1 billion cycles per second will take 1 billion seconds just to execute `1000^6` 1 cycle instructions. And even evaluating the expression `a^x + b^y = c^z` takes far more than 1 cycle, so we need to be smart about the search.
+The core challenge behind a counterexample search strategy is dealing with the enormous size of the space being examined. For instance, taking a maximum value for the bases and exponents of `1000` we end up with `1000^6` points. That number is so large that a 1GHz CPU that can do 1 billion cycles per second will take 1 billion seconds just to execute `1000^6` 1 cycle instructions. Evaluating the expression `a^x + b^y = c^z` takes far more than 1 cycle, so we need to be smart about the search.
 
-First we will describe the simplest algorithm for conducting a counterexample search, and then iteratively refine it with  various optimizations. Next we will how scaling this simple algorithm hits a wall very quickly, and then describe additional optimizations that let us expand the search space over what is possible with the simple algorithm. The optimizations and search techniques we use have all been considered in previous efforts. Finally we'll describe our new implementation that distributes the problem allowing us to explore problem sizes larger than have been considered in previous efforts.
+First we will describe the simplest algorithm for conducting a counterexample search, and then iteratively refine it with  various optimizations. Then we will show how scaling this simple algorithm hits a wall very quickly, and then describe additional optimizations that let us expand the search space past what is possible with the simple algorithm. The optimizations and search techniques described have all been considered in previous efforts. Finally we'll describe our new implementation that distributes the problem allowing us to further scale the problem sizes being considered.
 
 ## Generation 1 Algorithm
 
-The following is a naive algorithm for conducting a search that computes every combination of the points `(a, x, b, y, c, z)` and then checks if it is a counterexample:
+The following is a naive algorithm for conducting a search that computes every combination of the points `(a, x, b, y, c, z)` and then checks if the point represents a counterexample:
 
 ```python
 for a in range(1, max_base+1):
@@ -41,11 +41,11 @@ def check(a, x, b, y, c, z):
         print "found counterexample:", a, x, b, y, c, z
 ```
 
-I ran this algorithm for an hour. That's % of the total space. Even if this were re-written in highly optimized C this is far too slow. count = 859796767, 85 minutes, or about 0.0000000859796767% of total space where base and exponents are 1000.
+I ran this algorithm for 85 minutes. In that period of time `859,796,767` points were examined. Considering the size of the state space with maximum base and exponent values of `1000`, that is approximately `0.0000000859796767%` of the total space covered. In reality it will probably run much slower than this short experiment doesn't include the very large exponents that take a lot of effort to compute. This test was written in Python, but even when written in optimized C, this strategy will simply not scale with search spaces this size. In order to make progress we need to cut down on the amount of work we are doing.
 
 ### Optimization 1
 
-Since `a^x + b^y` is communative we don't have to bother testing `b^y + a^x`. This can be incorporated into the algorithm above by adjusting the upper bound of the values assigned to `b`:
+Since `a^x + b^y` is communative we don't have to bother also testing `b^y + a^x`. This can be incorporated into the algorithm above by adjusting the upper bound of the values assigned to `b`:
 
 ```python
 for a in range(1, max_base+1):
@@ -53,11 +53,11 @@ for a in range(1, max_base+1):
         ...
 ```
 
-Eliminating 50% is really great, but it isn't good enough.
+This filter reduces by 50% the number of points that must be considered. The problem is that the search space is so large that even with a 50% reduction in size it is still much too large. But we certainly want to use any optimizations we can find.
 
 ### Optimization 2
 
-Since we only care about counterexamples we don't need to check any points where the bases have a common prime. This means that when iterating over the points in the space we can skip points where any two of the bases (e.g. `a` and `b`) have a common prime factor.
+Since we only care about counterexamples we don't need to check any points where the bases have a common prime. This means that when iterating over the points in the space we can skip all points for which any two of the bases (e.g. `a` and `b`) have a common prime factor.
 
 ```python
 for a in range(1, max_base+1):
@@ -66,6 +66,8 @@ for a in range(1, max_base+1):
             continue
         ...
 ```
+
+This is actually a pretty nice optimization. Even though computing `gcd` isn't cheap, we only have to do it roughly `max_base * (max_base + 1) / 2` times and what we get in return is the ability to completely skip the rest of the nested for loops for that combination of `(a, b)` values.
 
 ### Optimization 3
 
