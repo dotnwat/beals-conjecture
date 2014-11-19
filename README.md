@@ -74,21 +74,26 @@ This is actually a pretty nice optimization. Even though computing `gcd` isn't c
 Notice above that for each left-hand-side value that is computed (the outer four for loops) all of the possible right-hand-side values are re-computed. Since the complexity of the right-hand-side is relatively small, we can pre-compute all possible `c^z` values and *search* for the match using a data structure such as a hash table. The following is a revised version of the above the previous algorithm that avoids the recomputation of all `c^z` values.
 
 ```python
-    for c in range(1, max_base+1):
-      for z in range(3, max_pow+1):
+cz_values = defaultdict(lambda: [])
+
+for c in range(1, max_base+1):
+    for z in range(3, max_pow+1):
         cz[val].append(c, z)
-        
+
+def axby_space(max_base, max_pow):
     for a in range(1, max_base+1):
-      for b in range(1, a+1):
-        if gcd(a, b) > 1:
-          continue
-        for x in range(3, max_pow+1):
-          for y in range(3, max_pow+1):
-            check(a, x, b, y)
-            
-    def check(a, x, b, y):
-      axby = pow(a, x) + pow(b, y)
-      
+        for b in range(1, a+1):
+            if gcd(a, b) > 1:
+                continue
+            for x in range(3, max_pow+1):
+                for y in range(3, max_pow+1):
+                    yield (a, x, b, y)
+
+for a, x, b, y in axby_space(max_base, max_pow):
+    axby = pow(a, x) + pow(b, y)
+    for c, z in cz_values[axby]:
+        if gcd(a, b) == 1 and gcd(a, c) == 1 and gcd(b, c) == 1:
+            print "counterexample found:", a, x, b, y, c, z
 ```
 
 ### Optimization 4
