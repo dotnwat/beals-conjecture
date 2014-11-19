@@ -202,6 +202,8 @@ The current implementation uses all of the optimizations described above. This s
 * What improvements can we get by using GPU-based acceleration (e.g. CUDA or OpenCL)?
 * Can we make searching the `c^z` space even faster by taking advantage of cache locality?
 
+The following discussion about new approaches is quoted from http://norvig.com/beal.html:
+
 >Beyond that, we need a new approach. My first idea is to only do a slice of the zr values at a time. This would require >switching from an approach that limits the bases and powers to one that limits the minimum and maximum sum searched for. >That is, we would call something like beal2(10 ** 20, 10 ** 50) to search for all solutions with sum between 1020 and 1050. >The program would build a table of all zr values in that range, and then carefully enumerate x,m,y,n to stay within that >range. One could then take this program and add a protocol like SETI@home where interested people could download the code, >be assigned min and max values to search on, and a large network of people could together search for solutions.
 >
 >Ultimately, I think that if there are any counterexamples at all, they will probably be found through generating functions >based on elliptical curves, or some other such approach. But that's too much math for me; I'm just trying to apply the >minimal amount of computer programming to look for the "obvious" counterexamples.
