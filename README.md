@@ -176,7 +176,7 @@ def check(a, x, b, y):
     candidates = []
     candidates_found = True
     for prime in primes:
-        axby = powers[prime][a][x] + powers[prime][b][y]
+        axby = (powers[prime][a][x] + powers[prime][b][y]) % prime
         if not axby in cz_values[prime]:
             candidates_found = False # done... needs to be true for all primes
             break
@@ -185,6 +185,12 @@ def check(a, x, b, y):
     if candidates_found:
         print candidates
 ```
+
+This is quite a lot faster than the generation 1 algorithm. We can search the space associated the parameters `max_base = max_pow = 100` in about 20 seconds, compared to 3 minutes with the previous version. The time savings is realized by using small fixed-size numbers.
+
+In the next section we describe an implementation in C++ that is designed to be distributed such that disjoint partitions of the search space are handled by independent workers, allowing us to scale out the search and reduce the costs of searching larger spaces.
+
+# Generation 3
 
 # Open Questions
 
