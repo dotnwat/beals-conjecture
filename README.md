@@ -13,9 +13,9 @@ There is a monetary prize offered by Andrew Beal for a proof or counterexample t
 
 The conceptual strategy for conducting a counterexample search is to compute all possible points `(a, x, b, y, c, z)` and then evaluate the expression `a^x + b^y = c^z`. If the expression holds and the bases do not have a common prime factor, then a counterexample has been found.
 
-The core challenge behind a counterexample search strategy is dealing with the enormous size of the space being examined. For instance, taking a maximum value for the bases and exponents of `1000` we end up with `1000^6` points. That number is so large that a 1GHz CPU that can do 1 billion cycles per second will take 1 billion seconds just to execute `1000^6` 1 cycle instructions. Evaluating the expression `a^x + b^y = c^z` takes far more than 1 cycle, so we need to be smart about the search.
+The core challenge behind a counterexample search strategy is dealing with the enormous size of the space being examined. For instance, taking a maximum value for the bases and exponents of `1000` we end up with `1000^6` points. That number is so large that a 1GHz CPU that runs at 1 billion cycles per second will take 1 billion seconds just to execute `1000^6` 1 cycle instructions. Evaluating the expression `a^x + b^y = c^z` takes far more than 1 cycle, so we need to be smart about the search.
 
-First we will describe the simplest algorithm for conducting a counterexample search, and then iteratively refine it with  various optimizations. Then we will show how scaling this simple algorithm hits a wall very quickly, and then describe additional optimizations that let us expand the search space past what is possible with the simple algorithm. The optimizations and search techniques described have all been considered in previous efforts. Finally we'll describe our new implementation that distributes the problem allowing us to further scale the problem sizes being considered.
+First we will describe the simplest algorithm for conducting a counterexample search, and then iteratively refine it with  various optimizations. Then we will show how scaling this simple algorithm hits a wall very quickly, and then describe additional optimizations that let us expand the search space past what is possible with the simple algorithm. The optimizations and search techniques that will be described have all been considered in previous efforts. Finally we'll describe our new implementation that distributes the problem allowing us to further scale the problem sizes being considered.
 
 ## Generation 1 Algorithm
 
@@ -26,7 +26,7 @@ for a in range(1, max_base+1):
     for b in range(1, max_base+1):
         for x in range(3, max_pow+1):
             for y in range(3, max_pow+1):
-                for c in range(1, max_pow+1):
+                for c in range(1, max_base+1):
                     for z in range(3, max_pow+1):
                         check(a, x, b, y, c, z)
 ```
@@ -35,13 +35,12 @@ A candidate verison of the `check` function might do something like the followin
 
 ```python
 def check(a, x, b, y, c, z):
-    axby = pow(a, x) + pow(b, y)
-    cz = pow(c, z)
+    axby, cz = pow(a, x) + pow(b, y), pow(c, z)
     if axby == cz and gcd(a, b) == 1 and gcd(a, c) == 1 and gcd(b, c) == 1:
         print "found counterexample:", a, x, b, y, c, z
 ```
 
-I ran this algorithm for 85 minutes. In that period of time `859,796,767` points were examined. Considering the size of the state space with maximum base and exponent values of `1000`, that is approximately `0.0000000859796767 %` of the total space covered. In reality it will probably run much slower than this short experiment doesn't include the very large exponents that take a lot of effort to compute. This test was written in Python, but even when written in optimized C, this strategy will simply not scale with search spaces this size. In order to make progress we need to cut down on the amount of work we are doing.
+I ran this algorithm for 85 minutes. In that period of time `859,796,767` points were examined. Considering the size of the state space with maximum base and exponent values of `1000`, that is approximately `0.0000000859796767 %` of the total space covered. In reality it will probably run much slower because this short experiment didn't reach the very large exponents that take a lot of effort to compute. This test was written in Python, but even when written in optimized C, this strategy will simply not scale with search spaces this size. In order to make progress we need to cut down on the amount of work we are doing, as well as making the operations more efficient.
 
 ### Optimization 1
 
@@ -67,20 +66,24 @@ for a in range(1, max_base+1):
         ...
 ```
 
-This is actually a pretty nice optimization. Even though computing `gcd` isn't cheap, we only have to do it roughly `max_base * (max_base + 1) / 2` times and what we get in return is the ability to completely skip the rest of the nested for loops for that combination of `(a, b)` values.
+This is actually a pretty nice optimization. Even though computing `gcd` isn't cheap, we only have to do it roughly `max_base * (max_base + 1) / 2` times, and what we get in return is the ability to completely skip the rest of the nested for loops for that combination of `(a, b)` values.
 
 ### Optimization 3
 
-Notice above that for each left-hand-side value that is computed (the outer four for loops) all of the possible right-hand-side values are re-computed. Since the complexity of the right-hand-side is relatively small, we can pre-compute all possible `c^z` values and *search* for the match using a data structure such as a hash table. The following is a revised version of the above the previous algorithm that avoids the recomputation of all `c^z` values.
+Notice that in the algorithm above that computes all combinations of `(a, x, b, y, c, z)` the outer four for loops compute the possible values of `a^x + b^y` (the left-hand-side), and the inner most two for loops compute all possible values of `c^z` to which a particular left-hand-side value is compared. Recomputing all possible `c^z` values is very expensive! An alternative is to pre-compute all possible values for `c^z` and save them in a data structure that can be searched. Then, given a left-hand-side value we can search for the corresponding match among the pre-computed values. If that search is cheaper than re-computing the values then we will speed-up the overall search.
+
+The following is a revised version of our algorithm that pre-computes the `c^z` values and stores them in a Python dictionary. Note that below the main search loop only generates combinations of `a^x + b^y`, significantly reducing the amount of work we have to do.
 
 ```python
 cz_values = defaultdict(lambda: [])
 
+# populate c^z table: one time cost
 for c in range(1, max_base+1):
     for z in range(3, max_pow+1):
         value = pow(c, z)
         cz[value].append((c, z))
 
+# generate left-hand-side values
 for a in range(1, max_base+1):
     for b in range(1, a+1):
         if gcd(a, b) > 1:
@@ -90,7 +93,7 @@ for a in range(1, max_base+1):
                 check(a, x, b, y)
 ```
 
-And now check avoids computing c^z and instead looks it up.
+And now the `check` function can avoid computing all `c^z` values, opting instead for a fast hash-table lookup:
 
 ```python
 def check(a, x, b, y):
@@ -101,13 +104,15 @@ def check(a, x, b, y):
                 print "counterexample found:", a, x, b, y, c, z
 ```
 
+It may cost a few seconds to pre-compute all of the `c^z` values for a very large search space, but since we get to amatorize that cost across the all points in the space we effectively reduce the cost of the search by a factor proportional to the size of the `c^z` space!
+
 ### Optimization 4
 
-We can re-use the computation of c^z by saving the results of computing the c^z values for searching
+Notice that to compute the values of `c^z` to store in a search structure we also compute all of the powers that are needed for evaluating `a^x + b^y`. Since `pow` isn't a cheap function, we can also save each value to avoid recomputing terms in the equation.
 
 ```python
-cz_values = defaultdict(lambda: []) # val -> { (c, z) }
-powers = defaultdict(lambda: {})    # (c, z) -> pow(c, z)
+cz_values = defaultdict(lambda: []) # pow(c, z) -> { (c, z) }
+powers = defaultdict(lambda: {})    #    (c, z) -> pow(c, z)
 
 for c in range(1, max_base+1):
     for z in range(3, max_pow+1):
@@ -119,9 +124,12 @@ for c in range(1, max_base+1):
 Then
 
 ```python
-for a, x, b, y in axby_space(max_base, max_pow):
+def check(a, x, b, y):
     axby = powers[a][x] + powers[b][y]
-    ...
+    if axby in cz_values: # avoid empty list creation
+        for c, z in cz_values[axby]:
+            if gcd(a, b) == 1 and gcd(a, c) == 1 and gcd(b, c) == 1:
+                print "counterexample found:", a, x, b, y, c, z
 ```
 
 Now we are getting somewhere. This is actually a simplified version of the approach used by Peter Norvig. His results from several years ago computed several different ranges (100x100 is done in 3minutes). But new methods are needed to go beyond what he is doing (e.g. 1000x100 is 19 hours and 100x10000 took 39 days).
