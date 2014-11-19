@@ -1,0 +1,46 @@
+initialized 85589 table elements
+Generating all combinations of z^r...
+mod largeP1:
+Hash statistics:
+Key count: 84960
+Buckets:   88506
+Load:      0.959935
+Max/buck:  8
+Empty bs:  33789
+avg ne:    1.552717
+Mem usage: 1345224
+Small bucket counts:
+  0 - 0
+  1 - 32675
+  2 - 15590
+  3 - 5011
+  4 - 1184
+  5 - 214
+  6 - 36
+  7 - 6
+  8 - 1
+  9 - 0
+mod largeP2:
+Hash statistics:
+Key count: 85201
+Buckets:   88506
+Load:      0.962658
+Max/buck:  8
+Empty bs:  33694
+avg ne:    1.554422
+Mem usage: 1346912
+Small bucket counts:
+  0 - 0
+  1 - 32678
+  2 - 15640
+  3 - 5043
+  4 - 1197
+  5 - 208
+  6 - 38
+  7 - 6
+  8 - 2
+  9 - 0
+Done. Precomputing powers...
+Done. Searching for candidates...
+287^175 + 278^233
+Finished. A total of 1 candidates were found.
