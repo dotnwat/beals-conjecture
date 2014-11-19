@@ -1,69 +1,8 @@
 #include <stdint.h>
 #include <assert.h>
+#include <unistd.h>
 #include <vector>
-
-/*
- * http://en.wikipedia.org/wiki/Modular_exponentiation
- */
-static inline uint32_t modpow(uint64_t base, uint64_t exponent, uint32_t mod)
-{
-  uint64_t result = 1;
-
-  base = base % mod;
-  while (exponent > 0) {
-    if (exponent % 2 == 1)
-      result = (result * base) % mod;
-    exponent = exponent >> 1;
-    base = (base * base) % mod;
-  }
-
-  assert(result <= (((1ULL) << 32)-1));
-  return result;
-}
-
-/*
- * http://en.wikipedia.org/wiki/Binary_GCD_algorithm
- */
-static inline unsigned int gcd(unsigned int u, unsigned int v)
-{
-  int shift;
-
-  /* GCD(0,v) == v; GCD(u,0) == u, GCD(0,0) == 0 */
-  if (u == 0)
-    return v;
-  if (v == 0)
-    return u;
-
-  /* Let shift := lg K, where K is the greatest power of 2
-        dividing both u and v. */
-  for (shift = 0; ((u | v) & 1) == 0; ++shift) {
-         u >>= 1;
-         v >>= 1;
-  }
-
-  while ((u & 1) == 0)
-    u >>= 1;
-
-  /* From here on, u is always odd. */
-  do {
-       /* remove all factors of 2 in v -- they are not common */
-       /*   note: v is not zero, so while will terminate */
-       while ((v & 1) == 0)  /* Loop X */
-           v >>= 1;
-
-       /* Now u and v are both odd. Swap if necessary so u <= v,
-          then set v = v - u (which is even). For bignums, the
-          swapping is just pointer movement, and the subtraction
-          can be done in-place. */
-       if (u > v) {
-         unsigned int t = v; v = u; u = t;
-       }  // Swap u and v.
-       v = v - u;                       // Here v >= u.
-     } while (v != 0);
-
-  /* restore common factors of 2 */
-  return u << shift;
-}
+#include "math.h"
 
 /*
  * Utility over c^z space for a particular mod value.
@@ -84,6 +23,7 @@ class cz {
         exists_[val] = true;
       }
     }
+    mod_ = mod;
   }
 
   inline uint32_t get(int c, int z) const {
@@ -96,30 +36,25 @@ class cz {
     return exists_[val];
   }
 
+  inline uint32_t mod() const {
+    return mod_;
+  }
+
  private:
   std::vector<std::vector<uint32_t> > vals_;
   std::vector<bool> exists_;
+  uint32_t mod_;
 };
 
 /*
  * Iterator over (a, x, b, y) space.
  *
- * The starting point is provided and provides an iterator interface over all
- * of the points up to max_base and max_power while performing common space
- * trimming optimizations (b<=a, gcd). It is equivalent to the following
- * nested loops but starts at a given point in the (a, x, b, y) space.
+ * The starting point is a value for the "a" dimension. All points will be
+ * generated and the normal trimming optimizations (b <= a, gcd) will be
+ * applied.
  *
- * for a in range(1, maxb+1):
- *   for b in range(1, a+1):
- *     if gcd(a, b) > 1:
- *       continue
- *     for x in range(3, maxp+1)
- *       for y in range(3, maxp+1):
- *         point = (a, x, b, y)
- *
- * Note that the caller must divide the space itself. It is a fatal error to
- * call next() if would result in choosing a point outside the configured
- * bounds.
+ * After initializing the class call next() next until the output parameter is
+ * false. When false is returned the corresponding point should be discarded.
  */
 class axby {
  public:
@@ -131,19 +66,20 @@ class axby {
     int a, x, b, y;
   };
 
-  axby(int maxb, int maxp, int a, int x, int b, int y) :
-    maxb_(maxb), maxp_(maxp), p_(a, x, b, y)
+  axby(int maxb, int maxp, int a) :
+    maxb_(maxb), maxp_(maxp), p_(a, 3, 1, 3), a_dim_(a)
   {
     assert(maxb > 0);
     assert(maxp > 2);
-    assert(a > 0);
-    assert(b > 0);
-    assert(x > 2);
-    assert(y > 2);
+    assert(p_.a > 0);
+    assert(p_.x == 3);
+    assert(p_.b == 1);
+    assert(p_.y == 3);
     p_.y--; // first next() call will be starting point
   }
 
-  point& next() {
+  inline point& next(bool *done) {
+    assert(p_.a == a_dim_);
     if (++p_.y > maxp_) {
       p_.y = 3;
       if (++p_.x > maxp_) {
@@ -151,9 +87,24 @@ class axby {
         p_.b++;
         for (;;) {
           if (p_.b > p_.a) {
-            p_.b = 1;
-            if (++p_.a > maxb_)
-              assert(false);
+
+            // this is where b rolls over. when generating the entire space of
+            // points this is the point we would increment "a". For example:
+            //
+            //   p_.b = 1;
+            //   if (++p_.a > maxb_) {
+            //     *done = true;
+            //     return p_;
+            //   }
+            //
+            // Since we only want to iterate over the space for a given "a"
+            // value this is the point we return `done = true` to the caller.
+
+            // bump p_.a so we can assert on its uniqueness
+            p_.a++;
+            *done = true;
+            return p_;
+
           } else if (gcd(p_.a, p_.b) > 1) {
             p_.b++;
           } else
@@ -161,6 +112,8 @@ class axby {
         }
       }
     }
+
+    *done = false;
     return p_;
   }
 
@@ -168,6 +121,52 @@ class axby {
   int maxb_;
   int maxp_;
   struct point p_;
+  int a_dim_;
+};
+
+class work {
+ public:
+  work(int maxb, int maxp, uint32_t *primes, size_t nprimes) :
+    maxb_(maxb), maxp_(maxp) {
+      for (size_t i = 0; i < nprimes; i++) {
+        czs_.push_back(new cz(maxb, maxp, primes[i]));
+      }
+  }
+
+  ~work() {
+    for (size_t i = 0; i < czs_.size(); i++)
+      delete czs_[i];
+  }
+
+  void do_work(int a, std::vector<axby::point>& results) {
+    bool done;
+    axby pts(maxb_, maxp_, a);
+
+    axby::point& pt = pts.next(&done);
+    while (!done) {
+      bool found = true;
+      for (unsigned i = 0; i < czs_.size(); i++) {
+        cz *czp = czs_[i];
+        uint64_t ax = czp->get(pt.a, pt.x);
+        uint64_t by = czp->get(pt.b, pt.y);
+        uint64_t val = (ax + by) % czp->mod();
+        if (!czp->exists(val)) {
+          found = false;
+          break;
+        }
+      }
+
+      if (found)
+        results.push_back(pt);
+
+      pt = pts.next(&done);
+    }
+  }
+
+ private:
+  int maxb_;
+  int maxp_;
+  std::vector<cz*> czs_;
 };
 
 /*
@@ -175,6 +174,27 @@ class axby {
  * coordinate all the tests from Python. Used via cffi or ctypes.
  */
 extern "C" {
+  void *work_make(unsigned int maxb, unsigned int maxp, uint32_t *primes, size_t nprimes) {
+    work *p = new work(maxb, maxp, primes, nprimes);
+    return (void*)p;
+  }
+
+  size_t work_do_work(void *workp, int a, axby::point *pts, size_t len) {
+    work *p = (work*)workp;
+    std::vector<axby::point> results;
+    p->do_work(a, results);
+    if (results.size() <= len) {
+      for (size_t i = 0; i < results.size(); i++)
+        pts[i] = results[i];
+    }
+    return results.size();
+  }
+
+  void work_free(void *workp) {
+    work *p = (work*)workp;
+    delete p;
+  }
+
   uint32_t c_modpow(uint64_t base, uint64_t exponent, uint32_t mod) {
     return modpow(base, exponent, mod);
   }
@@ -203,20 +223,21 @@ extern "C" {
     return p->exists(val);
   }
 
-  void *axby_make(unsigned int maxb, unsigned int maxp, int a, int x, int b, int y) {
-    axby *p = new axby(maxb, maxp, a, x, b, y);
+  void *axby_make(unsigned int maxb, unsigned int maxp, int a) {
+    axby *p = new axby(maxb, maxp, a);
     return (void*)p;
   }
 
-  void axby_next(void *axbyp, axby::point *pp, int count) {
+  /* if done, the returned point is invalid. */
+  bool axby_next(void *axbyp, axby::point *pp) {
     axby *p = (axby*)axbyp;
-    for (int i = 0; i < count; i++) {
-      axby::point& pt = p->next();
-      pp[i].a = pt.a;
-      pp[i].x = pt.x;
-      pp[i].b = pt.b;
-      pp[i].y = pt.y;
-    }
+    bool done;
+    axby::point& pt = p->next(&done);
+    pp->a = pt.a;
+    pp->x = pt.x;
+    pp->b = pt.b;
+    pp->y = pt.y;
+    return done;
   }
 
   void axby_free(void *axbyp) {
