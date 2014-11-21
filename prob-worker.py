@@ -1,4 +1,5 @@
 import sys
+import argparse
 import xmlrpclib
 import time
 import threading
@@ -7,10 +8,6 @@ import beal
 xmlrpclib.Marshaller.dispatch[type(0L)] = lambda _, v, w: w("<value><i8>%d</i8></value>" % v)
 xmlrpclib.Marshaller.dispatch[type(0)] = lambda _, v, w: w("<value><i8>%d</i8></value>" % v)
 
-num_workers = 1
-if len(sys.argv) == 2:
-    num_workers = max(1, int(sys.argv[1]))
-print "starting", num_workers, "workers"
 search = None
 
 def setup_context(work_spec):
@@ -26,9 +23,10 @@ def setup_context(work_spec):
     assert primes   == search.primes()
 
 class Worker(threading.Thread):
-    def __init__(self):
+    def __init__(self, host, port):
         super(Worker, self).__init__()
-        self._server = xmlrpclib.ServerProxy('http://localhost:8000')
+        address = "http://%s:%s" % (host, port)
+        self._server = xmlrpclib.ServerProxy(address)
         self.daemon = True
 
     def run(self):
@@ -43,11 +41,18 @@ class Worker(threading.Thread):
             hits = search.search(part[0])
             self._server.finish_work(part, tuple(hits))
 
-# start the workers
-workers = []
-for _ in range(num_workers):
-    worker = Worker()
-    worker.start()
-    workers.append(worker)
-for worker in workers:
-    worker.join()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("num_workers", type=int, default=1)
+    parser.add_argument("host", type=str, default="localhost")
+    parser.add_argument("port", type=str, default="8000")
+    args = parser.parse_args()
+
+    # start the workers
+    workers = []
+    for _ in range(args.num_workers):
+        worker = Worker(args.host, args.port)
+        worker.start()
+        workers.append(worker)
+    for worker in workers:
+        worker.join()

@@ -168,7 +168,7 @@ if __name__ == '__main__':
     p = Problem(maxb, maxp, primes, output)
     pp = ProblemProxy(p)
 
-    server = SimpleXMLRPCServer(("localhost", 8000), logRequests=False,
+    server = SimpleXMLRPCServer(("0.0.0.0", 8000), logRequests=False,
             allow_none=True)
     server.register_instance(pp)
     server.serve_forever()
