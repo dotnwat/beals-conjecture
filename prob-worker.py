@@ -1,3 +1,4 @@
+import sys
 import xmlrpclib
 import time
 import threading
@@ -6,7 +7,10 @@ import beal
 xmlrpclib.Marshaller.dispatch[type(0L)] = lambda _, v, w: w("<value><i8>%d</i8></value>" % v)
 xmlrpclib.Marshaller.dispatch[type(0)] = lambda _, v, w: w("<value><i8>%d</i8></value>" % v)
 
-num_workers = 4
+num_workers = 1
+if len(sys.argv) == 2:
+    num_workers = max(1, int(sys.argv[1]))
+print "starting", num_workers, "workers"
 search = None
 
 def setup_context(work_spec):
