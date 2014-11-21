@@ -56,7 +56,7 @@ class WorkGenerator(object):
         self._work = self.__work_generator()
 
     def __work_generator(self):
-        for a in range(280, self._maxb+1):
+        for a in range(1, self._maxb+1):
             self._pct_done = float(a) / float(self._maxb)
             yield (a,)
         self._done = True
