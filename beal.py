@@ -67,6 +67,9 @@ class search(object):
     def __init__(self, maxb, maxp, primes):
         self._p = _libbeal.work_make(maxb, maxp, primes, len(primes))
         self._points = _ffi.new('struct point [1000000]')
+        self._max_base = maxb
+        self._max_pow = maxp
+        self._primes = primes
 
     def __del__(self):
         self.cleanup()
@@ -77,6 +80,13 @@ class search(object):
         for i in range(0, nresults):
             yield (self._points[i].a, self._points[i].x, self._points[i].b,
                     self._points[i].y)
+
+    def max_base(self):
+        return self._max_base
+    def max_pow(self):
+        return self._max_pow
+    def primes(self):
+        return self._primes
 
     def cleanup(self):
         if self._p:
