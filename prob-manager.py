@@ -156,11 +156,16 @@ class ProblemProxy(object):
 if __name__ == '__main__':
     primes = (4294967291L, 4294967279L)
 
-    output = None
-    if len(sys.argv) == 2:
-        output = sys.argv[1]
+    maxb = int(sys.argv[1])
+    maxp = int(sys.argv[2])
 
-    p = Problem(300, 300, primes, output)
+    output = None
+    if len(sys.argv) == 4:
+        output = sys.argv[3]
+
+    print "starting problem", maxb, maxp, output
+
+    p = Problem(maxb, maxp, primes, output)
     pp = ProblemProxy(p)
 
     server = SimpleXMLRPCServer(("localhost", 8000), logRequests=False,
