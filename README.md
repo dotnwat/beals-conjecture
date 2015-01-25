@@ -425,7 +425,7 @@ class TestCz(unittest.TestCase):
         cz = beal.cz(maxb, maxp, mod)
 ```
 
-Next we recompute all of the values in Python and ensure that we are able to retrieve the same value through the `get` interface:
+Next we recompute all of the values in Python and ensure that we are able to retrieve the same value through the `get` interface, and that their value is found with the `exists` interface:
 
 ```python
         values = set()
@@ -441,12 +441,12 @@ Next we recompute all of the values in Python and ensure that we are able to ret
         for value in values:
             exists = cz.exists(value)
             self.assertTrue(exists)
+```
 
-        # iterating over all 2^32 positions in the exists set is expensive so
-        # we just perform a random sampling. anything that isn't false should
-        # be in the exists set we calculated above from the cz table
-        # 10M,100M -> 1.3s,12s,
-        limit = 10**6 if fast else 10**8
+Ideally we would like to guarantee that the interface doesn't return false negatives, but this requires querying all values from 0 to 2^32. In the interest of time we compromise by checking a set of random values:
+
+```python
+        limit = 10**8
         for _ in xrange(limit):
             value = random.randint(0, 2**32-1)
             exists = cz.exists(value)
@@ -454,29 +454,18 @@ Next we recompute all of the values in Python and ensure that we are able to ret
                 self.assertTrue(value in values)
 
         cz.cleanup()
+```
 
+And that is it. In `test.py` you can see we call `__check` with several different sets of parameters. For instance we generate some random parameters:
+
+```python
     def test_random(self):
-        limit = 2 if _FAST else 40
+        limit = 40
         for _ in xrange(limit):
             maxb = random.randint(1, 2000)
             maxp = random.randint(3, 2000)
             mod = random.randint(1, 2**32-1)
             self.__check(maxb, maxp, mod, True)
-
-    def test_specific(self):
-        self.__check(1000, 1000, 4294967291)
-        self.__check(1000, 1000, 4294967279)
-        self.__check(2000, 2000, 4294967279)
-        self.__check(2000, 2000, 2**32-1)
-
-    def test_dense(self):
-        for maxb in range(1, 12):
-            for maxp in range(3, 12):
-                self.__check(maxb, maxp, 4294967291, True)
-        for maxb in range(1, 12):
-            self.__check(maxb, 100000, 4294967291, True)
-        for maxp in range(3, 14):
-            self.__check(100000, maxp, 4294967291, True)
 ```
 
 # Open Questions
