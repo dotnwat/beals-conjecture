@@ -369,7 +369,7 @@ def gcd(u, v):
     return _libbeal.c_gcd(u, v)
 ```
 
-To actually perform the tests we can now do something like the following:
+To actually perform the tests we can now do something like the following. Note the `test_specific` function where we had actually found a problem in one version of the algorithm on Wikipedia (the fix had already been added after I had snatched the code a while back):
 
 ```python
 class TestModPow(unittest.TestCase):
