@@ -192,7 +192,80 @@ In the next section we describe an implementation in C++ that is designed to be 
 
 # Generation 3
 
-The current implementation uses all of the optimizations described above. This section is not yet complete.
+The implementation found in this repository contains all of the above optimizations, but adds the ability to decompose the problem and perform the search in parallel across any number of worker nodes. The high-level structure of the solution is for each worker node to host a copy of the `c^z` space such that it can examine any partitioning of the `a^x + b^y` space. Since the `c^z` space is relatively small, we try much larger spaces without worrying about memory pressure. A master node computes partitions, responds to requests for work, and records results from worker nodes.
+
+### Manager
+
+The manager process (`prob-manager.py`) exposes two RPC endpoints `get_work` and `finish_work`. The partitioning of the `a^x + b^y` space is very simple, handing out distinct values for `a` (smarter partitioning is needed for expanding the search in certain ways, but this works for now). When a worker requests a partitioning the the master process will run the following, where `__get_work()` returns a distinct `a` value:
+
+```python
+def get_work(self):
+    with self._lock:
+        part = self.__get_work()
+        if not part:
+            return None
+        work_spec = {'max_base': self._maxb,
+                'max_pow': self._maxp,
+                'primes': self._primes,
+                'part': part}
+        return work_spec
+```
+
+When a worker completes a search it responds to the `finish_work` RPC endpoint. A completed work unit contains enough information to detect duplicates, as well as all of the candidate solutions that the worker found. The master writes all of the candidates out to a single file.
+
+```python
+def finish_work(self, spec, results):
+    with self._lock:
+        dupe = self._work_queue.complete(spec)
+        if dupe:
+            return
+        if self._output:
+            with open(self._output, 'a') as f:
+                for result in results:
+                    print result
+                    f.write("%d %d %d %d\n" % tuple(result))
+                f.flush()
+        else:
+            print (spec, results)
+```
+
+### Worker
+
+The worker process (`prob-worker.py`) is responsible for handling a partition of the `a^x + b^y` space. The following code snippet is run by each worker. In an infinite loop a work unit is retrieved, a context is created (see below), a search is performed, and the results are returned to the manager.
+
+```
+def run(self):
+    while True:
+        work_spec = self._server.get_work()
+        if not work_spec:
+            print "no work available... waiting"
+            time.sleep(10)
+            continue
+        setup_context(work_spec)
+        part = work_spec['part']
+        hits = search.search(part[0])
+        self._server.finish_work(part, tuple(hits))
+```
+
+Note above that for each work unit a new context is created (i.e. `setup_context()`). A context contains all of the data structures used to perform a search and can take some time to setup. Currently a worker guarantees that a context is compatible with each work unit, but doesn't attempt to switch contexts after the first work unit is retrieved. This is primarily just for simplicity:
+
+```python
+search = None
+
+def setup_context(work_spec):
+    global search
+    max_base = work_spec['max_base']
+    max_pow = work_spec['max_pow']
+    primes = work_spec['primes']
+    if not search:
+        search = beal.search(max_base, max_pow, primes)
+        return
+    assert max_base == search.max_base()
+    assert max_pow  == search.max_pow()
+    assert primes   == search.primes()
+```
+
+So where is the search actually performed? Well Python can be quite slow at computation, but it is fantastic at tasks such as coordinating work and handling network communication. So we've chosen to implement all the performance critical parts in C.
 
 # Open Questions
 
