@@ -437,7 +437,6 @@ Next we recompute all of the values in Python and ensure that we are able to ret
                 values.add(value2)
         assert len(values) > 0
 
-        # assert that every value in c^z is set in the exists set
         for value in values:
             exists = cz.exists(value)
             self.assertTrue(exists)
@@ -465,7 +464,7 @@ And that is it. In `test.py` you can see we call `__check` with several differen
             maxb = random.randint(1, 2000)
             maxp = random.randint(3, 2000)
             mod = random.randint(1, 2**32-1)
-            self.__check(maxb, maxp, mod, True)
+            self.__check(maxb, maxp, mod)
 ```
 
 # Open Questions
