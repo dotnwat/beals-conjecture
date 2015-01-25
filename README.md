@@ -381,15 +381,14 @@ class TestModPow(unittest.TestCase):
 
     def test_dense(self):
         # 2,3,4,5x100 -> 3s,12s,30s,1m
-        limit = 200 if _FAST else 500
+        limit = 500
         for base in range(1, limit):
             for expo in range(1, limit):
                 for mod in range(1, limit):
                     self.__check(base, expo, mod)
 
     def test_random(self):
-        # 10K,1M,10M -> .5s,11s,2m
-        limit = 10**4 if _FAST else 10**7
+        limit = 10**7
         for _ in range(limit):
             base = random.randint(1, 2**64-1)
             expo = random.randint(1, 2**64-1)
@@ -410,15 +409,13 @@ class TestGCD(unittest.TestCase):
         self.assertEqual(value1, value2, "%u %u" % (u, v))
 
     def test_dense(self):
-        # 1K,10K -> .5s,40s
-        limit = 10**3 if _FAST else 10**4
+        limit = 10**4
         for u in xrange(1, limit):
             for v in xrange(1, limit):
                 self.__check(u, v)
 
     def test_random(self):
-        # 1M,10M,100M -> 1.2s,10s,1m40s
-        limit = 10**6 if _FAST else 10**8
+        limit = 10**8
         for _ in xrange(limit):
             u = random.randint(1, 2**32-1)
             v = random.randint(1, 2**32-1)
