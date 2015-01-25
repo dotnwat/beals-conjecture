@@ -417,13 +417,17 @@ class cz {
 };
 ```
 
-Testing
+To test the `cz` class we again coordinate things with Python. At a high-level we construct a `cz` class and then assert various properties. The `__check` method is responsible for this. First we create the `cz` instance:
 
 ```python
 class TestCz(unittest.TestCase):
-    def __check(self, maxb, maxp, mod, fast=False):
+    def __check(self, maxb, maxp, mod):
         cz = beal.cz(maxb, maxp, mod)
+```
 
+Next we recompute all of the values in Python and ensure that we are able to retrieve the same value through the `get` interface:
+
+```python
         values = set()
         for c in xrange(1, maxb+1):
             for z in xrange(3, maxp+1):
