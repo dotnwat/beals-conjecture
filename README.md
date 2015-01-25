@@ -327,7 +327,7 @@ def gcd(u, v):
     return _libbeal.c_gcd(u, v)
 ```
 
-To actually perform the tests we can now do something like the following. Note the `test_specific` function where we had actually found a problem in one version of the algorithm on Wikipedia (the fix had already been added after I had snatched the code a while back):
+To actually perform the tests we can compute values in Python and compare the values to what is computed by the C versions. In the following snippet `__check` will use Python built-in function `pow` and compare to our implementation. We've removed some of the tests here (see `test.py`), but `test_random` effectively generates a large number of random values to check. Note the `test_specific` function where we had actually found a problem in one version of the algorithm on Wikipedia (the fix had already been added after I had snatched the code a while back). 
 
 ```python
 class TestModPow(unittest.TestCase):
@@ -336,14 +336,6 @@ class TestModPow(unittest.TestCase):
         value2 = beal.modpow(b, e, m)
         self.assertEqual(value1, value2,
                 "%d != %d: %d %d %d" % (value1, value2, b, e, m))
-
-    def test_dense(self):
-        # 2,3,4,5x100 -> 3s,12s,30s,1m
-        limit = 500
-        for base in range(1, limit):
-            for expo in range(1, limit):
-                for mod in range(1, limit):
-                    self.__check(base, expo, mod)
 
     def test_random(self):
         limit = 10**7
@@ -359,7 +351,12 @@ class TestModPow(unittest.TestCase):
         # the modpow algo, as is done in the wikipedia algorithm.
         self.__check(4542062976100348463, 4637193517411546665, 3773338459)
         self.__check(70487458014159955, 5566498974156504764, 3541295600)
+```
 
+Similarily, to test GCD we use the Python library function `fractions.gcd` to compute a value to compare to our C version:
+
+
+```python
 class TestGCD(unittest.TestCase):
     def __check(self, u, v):
         value1 = fractions.gcd(u, v)
@@ -371,13 +368,6 @@ class TestGCD(unittest.TestCase):
         for u in xrange(1, limit):
             for v in xrange(1, limit):
                 self.__check(u, v)
-
-    def test_random(self):
-        limit = 10**8
-        for _ in xrange(limit):
-            u = random.randint(1, 2**32-1)
-            v = random.randint(1, 2**32-1)
-            self.__check(u, v)
 ```
 
 # Open Questions
