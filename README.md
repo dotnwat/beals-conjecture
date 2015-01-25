@@ -194,7 +194,7 @@ In the next section we describe an implementation in C++ that is designed to be 
 
 The implementation found in this repository contains all of the above optimizations, but adds the ability to decompose the problem and perform the search in parallel across any number of worker nodes. The high-level structure of the solution is for each worker node to host a copy of the `c^z` space such that it can examine any partitioning of the `a^x + b^y` space. Since the `c^z` space is relatively small, we try much larger spaces without worrying about memory pressure. A master node computes partitions, responds to requests for work, and records results from worker nodes.
 
-### Manager
+## Manager
 
 The manager process (`prob-manager.py`) exposes two RPC endpoints `get_work` and `finish_work`. The partitioning of the `a^x + b^y` space is very simple, handing out distinct values for `a` (smarter partitioning is needed for expanding the search in certain ways, but this works for now). When a worker requests a partitioning the the master process will run the following, where `__get_work()` returns a distinct `a` value:
 
@@ -229,7 +229,7 @@ def finish_work(self, spec, results):
             print (spec, results)
 ```
 
-### Worker
+## Worker
 
 The worker process (`prob-worker.py`) is responsible for handling a partition of the `a^x + b^y` space. The following code snippet is run by each worker. In an infinite loop a work unit is retrieved, a context is created (see below), a search is performed, and the results are returned to the manager.
 
@@ -267,7 +267,7 @@ def setup_context(work_spec):
 
 So where is the search actually performed? Well Python can be quite slow at computation, but it is fantastic at tasks such as coordinating work and handling network communication. So we've chosen to implement all the performance critical parts in C.
 
-### GCD and Modular Exponentiation
+## GCD and Modular Exponentiation
 
 Implementations of GCD and fast modular exponentation are found in `math.h`. The following were taken from Wikipedia and ported to C from psuedo code. I've only included `modpow` here:
 
@@ -368,6 +368,53 @@ class TestGCD(unittest.TestCase):
         for u in xrange(1, limit):
             for v in xrange(1, limit):
                 self.__check(u, v)
+```
+
+## The c^z Context
+
+For each prime value used as a filter we create a `cz` class that contains search structures used to quickly find candidate solutions. The private variable `std::vector<std::vector<uint32_t> > vals_` is used to avoid recomputing the exponential terms in `a^x + b^y`. When performing the actual search we avoid using any type of hash table, and instead exploit the 32-bit bound on prime values by created a 4GB sparse array, represented by the private variable `std::vector<bool> exists_;`. Note in the constructor that we only set the bits to true that correspond to values found in the `c^z` space.
+
+Finally, the `get` and `exists` methods are used to interface to the data structures.
+
+```c++
+class cz {
+ public:
+  cz(unsigned int maxb, unsigned int maxp, uint32_t mod) {
+    assert(maxb > 0);
+    assert(maxp > 2);
+    assert(mod > 0);
+    vals_.resize(maxb+1);
+    exists_.resize(1ULL<<32);
+    for (unsigned int c = 1; c <= maxb; c++) {
+      vals_[c].resize(maxp+1);
+      for (unsigned int z = 3; z <= maxp; z++) {
+        uint32_t val = modpow(c, z, mod);
+        vals_[c][z] = val;
+        exists_[val] = true;
+      }
+    }
+    mod_ = mod;
+  }
+
+  inline uint32_t get(int c, int z) const {
+    assert(c > 0);
+    assert(z > 2);
+    return vals_[c][z];
+  }
+
+  inline bool exists(uint32_t val) const {
+    return exists_[val];
+  }
+
+  inline uint32_t mod() const {
+    return mod_;
+  }
+
+ private:
+  std::vector<std::vector<uint32_t> > vals_;
+  std::vector<bool> exists_;
+  uint32_t mod_;
+};
 ```
 
 # Open Questions
