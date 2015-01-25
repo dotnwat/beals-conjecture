@@ -267,7 +267,7 @@ def setup_context(work_spec):
 
 So where is the search actually performed? Well Python can be quite slow at computation, but it is fantastic at tasks such as coordinating work and handling network communication. So we've chosen to implement all the performance critical parts in C.
 
-### math.h
+### GCD and Modular Exponentiation
 
 The following code snippets were grabbed off Wikipedia and rewritten in C. They are used for the GCD and modular exponentiation tasks:
 
@@ -334,6 +334,95 @@ static inline unsigned int gcd(unsigned int u, unsigned int v)
   /* restore common factors of 2 */
   return u << shift;
 }
+```
+
+So how do we go about testing the implementation? After all, these are crucial to the correctness of the search. What we've done is used Python to coordinate a large number of tests and compare the results to a separate implementation of each algorithm.
+
+In `beal.cc` we have all of the C implementations, and then we bind from Python. First we create a simple C wrapper:
+
+```C
+uint32_t c_modpow(uint64_t base, uint64_t exponent, uint32_t mod) {
+  return modpow(base, exponent, mod);
+}
+
+unsigned int c_gcd(unsigned int u, unsigned int v) {
+  return gcd(u, v);
+}
+```
+
+And in `beal.py` we create the bindings:
+
+```python
+import cffi
+
+_ffi = cffi.FFI()
+_libbeal = _ffi.dlopen("./libbeal.so")
+_ffi.cdef('''
+uint32_t c_modpow(uint64_t base, uint64_t exponent, uint32_t mod);
+unsigned int c_gcd(unsigned int u, unsigned int v);
+''')
+
+def modpow(b, e, m):
+    return _libbeal.c_modpow(b, e, m)
+
+def gcd(u, v):
+    return _libbeal.c_gcd(u, v)
+```
+
+To actually perform the tests we can now do something like the following:
+
+```python
+class TestModPow(unittest.TestCase):
+    def __check(self, b, e, m):
+        value1 = pow(b, e, m)
+        value2 = beal.modpow(b, e, m)
+        self.assertEqual(value1, value2,
+                "%d != %d: %d %d %d" % (value1, value2, b, e, m))
+
+    def test_dense(self):
+        # 2,3,4,5x100 -> 3s,12s,30s,1m
+        limit = 200 if _FAST else 500
+        for base in range(1, limit):
+            for expo in range(1, limit):
+                for mod in range(1, limit):
+                    self.__check(base, expo, mod)
+
+    def test_random(self):
+        # 10K,1M,10M -> .5s,11s,2m
+        limit = 10**4 if _FAST else 10**7
+        for _ in range(limit):
+            base = random.randint(1, 2**64-1)
+            expo = random.randint(1, 2**64-1)
+            mod = random.randint(1, 2**32-1)
+            self.__check(base, expo, mod)
+
+    def test_specific(self):
+        # random testing found a problem with c_modpow for these inputs. the
+        # fix was to include `base = base % mod` before starting the loop in
+        # the modpow algo, as is done in the wikipedia algorithm.
+        self.__check(4542062976100348463, 4637193517411546665, 3773338459)
+        self.__check(70487458014159955, 5566498974156504764, 3541295600)
+
+class TestGCD(unittest.TestCase):
+    def __check(self, u, v):
+        value1 = fractions.gcd(u, v)
+        value2 = beal.gcd(u, v)
+        self.assertEqual(value1, value2, "%u %u" % (u, v))
+
+    def test_dense(self):
+        # 1K,10K -> .5s,40s
+        limit = 10**3 if _FAST else 10**4
+        for u in xrange(1, limit):
+            for v in xrange(1, limit):
+                self.__check(u, v)
+
+    def test_random(self):
+        # 1M,10M,100M -> 1.2s,10s,1m40s
+        limit = 10**6 if _FAST else 10**8
+        for _ in xrange(limit):
+            u = random.randint(1, 2**32-1)
+            v = random.randint(1, 2**32-1)
+            self.__check(u, v)
 ```
 
 # Open Questions
