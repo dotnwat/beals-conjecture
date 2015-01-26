@@ -9,6 +9,20 @@ There is a monetary prize offered by Andrew Beal for a proof or counterexample t
 * http://norvig.com/beal.html 
 * http://www.danvk.org/wp/beals-conjecture/
 
+#### Current Status
+
+Where are we at with the search? Below is a matrix describing the state of known past attempts, as well as my own using the distributed approach described here. Below `N` represents the spaces covered by Peter Norvig (http://norvig.com/beal.html), and the `D` at `1000x1000` was covered at http://www.danvk.org/wp/beals-conjecture/. The cells marked `CURRENT` are the jobs I've performed, and the results are available in the `results/` directory of this Git repository.
+
+|           |p=7    |p=10   |p=30   |p=100   | p=1,000 |p=2000| p=3,000 |
+| :-------- |:----- |:----- |:------|:------ |:--------|:-----|:------- |
+| **b=100**    |N      |N      |N      |N    |N      |  |         |
+| **b=1,000**   |N      |N      |N      |N    |D     |   |         |
+| **b=2,000**   |--      |--      |--         |--     |--      |CURRENT  |       |
+| **b=3,000**  |N      |N      |N      |N     |--      |--   |CURRENT         |
+| **b=10,000**  |N      |N      |N      |N     |      |   |         |
+| **b=100,000** |N      |N      |--     |CURRENT |    |   |         |
+| **b=250,000** |N      |--       |--       |CURRENT        |     |   |         |
+
 #### Problem Overview
 
 The conceptual strategy for conducting a counterexample search is to compute all possible points `(a, x, b, y, c, z)` and then evaluate the expression `a^x + b^y = c^z`. If the expression holds and the bases do not have a common prime factor, then a counterexample has been found.
