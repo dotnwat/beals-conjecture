@@ -467,6 +467,151 @@ And that is it. In `test.py` you can see we call `__check` with several differen
             self.__check(maxb, maxp, mod)
 ```
 
+## Work Context
+
+The context that we setup for a search is primarily just one `cz` class instance per prime number used as a filter. We organize these instances in the `work` class. See below in the constructor that we create a `cz` instance for each prime:
+
+```c++
+class work {
+ public:
+  work(int maxb, int maxp, uint32_t *primes, size_t nprimes) :
+    maxb_(maxb), maxp_(maxp) {
+      for (size_t i = 0; i < nprimes; i++) {
+        czs_.push_back(new cz(maxb, maxp, primes[i]));
+      }
+  }
+
+  ~work() {
+    for (size_t i = 0; i < czs_.size(); i++)
+      delete czs_[i];
+  }
+```
+
+The real work happens in `do_work` that takes as input the partition of `a^x + b^y` to search (defined currently by a value for `a`), and returns a set of `(a,x,b,y)` candidate points as the result. First we create an `axby` class instance that manages the iteration over the points we will be searching:
+
+```c++
+  void do_work(int a, std::vector<axby::point>& results) {
+    bool done;
+    axby pts(maxb_, maxp_, a);
+
+    axby::point& pt = pts.next(&done);
+    while (!done) {
+```
+
+Now, for each point and for each prime filter we calculate `a^x + b^y mod prime` and search for candidates in the corresponding `cz` instance, collecting the results in an output vector:
+
+```c++
+      bool found = true;
+      for (unsigned i = 0; i < czs_.size(); i++) {
+        cz *czp = czs_[i];
+        uint64_t ax = czp->get(pt.a, pt.x);
+        uint64_t by = czp->get(pt.b, pt.y);
+        uint64_t val = (ax + by) % czp->mod();
+        if (!czp->exists(val)) {
+          found = false;
+          break;
+        }
+      }
+
+      if (found)
+        results.push_back(pt);
+
+      pt = pts.next(&done);
+    }
+  }
+
+ private:
+  int maxb_;
+  int maxp_;
+  std::vector<cz*> czs_;
+};
+```
+
+That is the core approach of the search. The only remaining issue is the iteration over the `a^x + b^y` space.
+
+## a^x + b^y Point Iteration
+
+```c++
+/*
+ * Iterator over (a, x, b, y) space.
+ *
+ * The starting point is a value for the "a" dimension. All points will be
+ * generated and the normal trimming optimizations (b <= a, gcd) will be
+ * applied.
+ *
+ * After initializing the class call next() next until the output parameter is
+ * false. When false is returned the corresponding point should be discarded.
+ */
+class axby {
+ public:
+  struct point {
+    point(int a, int x, int b, int y) :
+      a(a), x(x), b(b), y(y)
+    {}
+
+    int a, x, b, y;
+  };
+
+  axby(int maxb, int maxp, int a) :
+    maxb_(maxb), maxp_(maxp), p_(a, 3, 1, 3), a_dim_(a)
+  {
+    assert(maxb > 0);
+    assert(maxp > 2);
+    assert(p_.a > 0);
+    assert(p_.x == 3);
+    assert(p_.b == 1);
+    assert(p_.y == 3);
+    p_.y--; // first next() call will be starting point
+  }
+
+  inline point& next(bool *done) {
+    assert(p_.a == a_dim_);
+    if (++p_.y > maxp_) {
+      p_.y = 3;
+      if (++p_.x > maxp_) {
+        p_.x = 3;
+        p_.b++;
+        for (;;) {
+          if (p_.b > p_.a) {
+
+            // this is where b rolls over. when generating the entire space of
+            // points this is the point we would increment "a". For example:
+            //
+            //   p_.b = 1;
+            //   if (++p_.a > maxb_) {
+            //     *done = true;
+            //     return p_;
+            //   }
+            //
+            // Since we only want to iterate over the space for a given "a"
+            // value this is the point we return `done = true` to the caller.
+
+            // bump p_.a so we can assert on its uniqueness
+            p_.a++;
+            *done = true;
+            return p_;
+
+          } else if (gcd(p_.a, p_.b) > 1) {
+            p_.b++;
+          } else
+            break;
+        }
+      }
+    }
+
+    *done = false;
+    return p_;
+  }
+
+ private:
+  int maxb_;
+  int maxp_;
+  struct point p_;
+  int a_dim_;
+};
+```
+
+
 # Open Questions
 
 * Are there other ways that the state space can be trimmed?
