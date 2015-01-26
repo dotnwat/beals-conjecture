@@ -527,21 +527,13 @@ Now, for each point and for each prime filter we calculate `a^x + b^y mod prime`
 };
 ```
 
-That is the core approach of the search. The only remaining issue is the iteration over the `a^x + b^y` space.
+That is a summary of the core approach to the search strategy implementation. The only remaining component is the iteration of the `(a,x,b,y)` points.
 
 ## a^x + b^y Point Iteration
 
+We use an `axby` helper class to iterate over point to check. It is partitioned by values of `a`. That is, the starting point is a value for the `a` dimension. All points will be generated and the normal trimming optimizations will be applied. First initialize the class with the starting `a` value:
+
 ```c++
-/*
- * Iterator over (a, x, b, y) space.
- *
- * The starting point is a value for the "a" dimension. All points will be
- * generated and the normal trimming optimizations (b <= a, gcd) will be
- * applied.
- *
- * After initializing the class call next() next until the output parameter is
- * false. When false is returned the corresponding point should be discarded.
- */
 class axby {
  public:
   struct point {
@@ -563,7 +555,11 @@ class axby {
     assert(p_.y == 3);
     p_.y--; // first next() call will be starting point
   }
+```
 
+The following is an iterator over the points. It is specialized for the case of a fixed `a` value, but can easily be used to generate an entire space, or modified to perform other iteration strategies:
+
+```c++
   inline point& next(bool *done) {
     assert(p_.a == a_dim_);
     if (++p_.y > maxp_) {
@@ -611,6 +607,78 @@ class axby {
 };
 ```
 
+So, that's it. Testing the `axby` class is fairly basic. For each `a` value in a range we create a new `axby` iterator instance:
+
+```python
+class TestAxby(unittest.TestCase):
+    def test_all_points(self):
+        maxb = 200
+        maxp = 200
+        for a in xrange(1, maxb+1):
+            axby = beal.axby(maxb, maxp, a)
+```
+
+Then we iterate over the space in Python and assert that the `axby` iterator implemented in C++ returns the exact same sequence:
+
+```python
+            for b in xrange(1, a+1):
+                if fractions.gcd(a, b) > 1:
+                    continue
+                for x in xrange(3, maxp+1):
+                    for y in xrange(3, maxp+1):
+                        done, point = axby.next()
+                        assert(not done)
+                        aa, xx, bb, yy = point
+                        self.assertEqual(a, aa)
+                        self.assertEqual(x, xx)
+                        self.assertEqual(b, bb)
+                        self.assertEqual(y, yy)
+            done, point = axby.next()
+            assert(done)
+            axby.cleanup()
+```
+
+Putting it all together, we can test an entire state space search.
+
+## End-to-end Testing
+
+We'll need something to compare our results to. We've taken the results published at http://www.danvk.org/wp/beals-conjecture/ for a `1000x1000` state space, and also used the published code on that website to generate several other reference data sets. These results are stored in the `gold/` directory. First we load all of the gold results into a set:
+
+```
+class TestSearch(unittest.TestCase):
+    PRIMES = [4294967291, 4294967279]
+
+    def __get_gold(self, maxb, maxp):
+        results = set()
+        regex = re.compile(r"(\d+)\^(\d+) \+ (\d+)\^(\d+)")
+        filename = "gold/danvk_%dx%d.dat" % (maxb, maxp)
+        with open(filename) as f:
+            for line in f.readlines():
+                m = regex.match(line)
+                if not m:
+                    continue
+                a = int(m.group(1))
+                x = int(m.group(2))
+                b = int(m.group(3))
+                y = int(m.group(4))
+                results.add((a, x, b, y))
+        return results
+```
+
+Finally, we use all of our code to perform a state space search one `a` value at a time, simulating the distribution of the problem. See `test.py` for checking other problem sizes.
+
+```python
+    def __check_gold(self, maxb, maxp, primes):
+        results = set()
+        search = beal.search(maxb, maxp, primes)
+        for a in range(1, maxb+1):
+            hits = search.search(a)
+            results.update(set(hits))
+        self.assertEqual(results, self.__get_gold(maxb, maxp))
+
+    def test_1000x1000(self):
+        self.__check_gold(1000, 1000, self.PRIMES)
+```
 
 # Open Questions
 
