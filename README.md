@@ -658,7 +658,7 @@ Putting it all together, we can test an entire state space search.
 
 We'll need something to compare our results to. We've taken the results published at http://www.danvk.org/wp/beals-conjecture/ for a `1000x1000` state space, and also used the published code on that website to generate several other reference data sets. These results are stored in the `gold/` directory. First we load all of the gold results into a set:
 
-```
+```python
 class TestSearch(unittest.TestCase):
     PRIMES = [4294967291, 4294967279]
 
